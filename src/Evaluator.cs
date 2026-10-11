@@ -1,3 +1,4 @@
+using System.Globalization;
 class Evaluator {
     // returns objects 
     private readonly List<object?> _results = new List<object?>();
@@ -27,7 +28,7 @@ class Evaluator {
                 _results.Add(result);
             }
             catch (EvaluationErrorException) {
-                break;
+                ;
             }
         }   
     }
@@ -53,40 +54,51 @@ class Evaluator {
 
 
             case Expr.Binary b:
+            {
                 var left = Evaluate(b.Left);
-                var rightBinary = Evaluate(b.Right);
+                var right = Evaluate(b.Right);
                 switch (b.Operator.Type)
                 {
                     case TokenType.PLUS:
-                        if (left is double lNum && rightBinary is double rNum)  return lNum + rNum;
-                        if (left is string lStr && rightBinary is string rStr)  return lStr + rStr;
-                        throw new InvalidOperationException($"Operands must be two numbers or two strings for operator '{b.Operator.Lexeme}'");
+                        if (left is double lNum && right is double rNum)  return lNum + rNum;
+                        if (left is string || right is string)  return StringMe(left) + StringMe(right);
+                        throw Error($"Operands must be two numbers or two strings for operator '{b.Operator.Lexeme}'", b.Operator);
                     
-                    case TokenType.MINUS:       CheckNumberOperands(b.Operator, left, rightBinary);
-                                                return (double)left! - (double)rightBinary!;
+                    case TokenType.MINUS:       CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! - (double)right!;
 
-                    case TokenType.STAR:        CheckNumberOperands(b.Operator, left, rightBinary);
-                                                return (double)left! * (double)rightBinary!;
+                    case TokenType.STAR:        CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! * (double)right!;
                                                 
-                    case TokenType.SLASH:       CheckNumberOperands(b.Operator, left, rightBinary);
-                        if ((double)rightBinary! == 0) throw new InvalidOperationException("Division by zero");
-                                                return (double)left! / (double)rightBinary!;
+                    case TokenType.SLASH:       CheckNumberOperands(b.Operator, left, right);
+                        if ((double)right! == 0) throw Error("Division by zero", b.Operator);
+                                                return (double)left! / (double)right!;
                                                 
-                    case TokenType.MOD:         CheckNumberOperands(b.Operator, left, rightBinary);
-                        if ((double)rightBinary! == 0) throw new InvalidOperationException("Division by zero");
-                                                return (double)left! % (double)rightBinary!;
+                    case TokenType.MOD:         CheckNumberOperands(b.Operator, left, right);
+                        if ((double)right! == 0) throw Error("Division by zero", b.Operator);
+                                                return (double)left! % (double)right!;
 
-                    case TokenType.EXP:         CheckNumberOperands(b.Operator, left, rightBinary);
-                                                return Math.Pow((double)left!, (double)rightBinary!);
+                    // might return infinity or NaN, should prolly update README 
+                    case TokenType.EXP:         CheckNumberOperands(b.Operator, left, right);
+                                                return Math.Pow((double)left!, (double)right!);
 
                     default: 
                     throw Error($"Binary operator not implemented: {b.Operator.Lexeme}", b.Operator);
                 }
+            }
 
             default:
             throw Error($"Evaluation not implemented for expression type: {expr.GetType().Name}");
         }
     }
+
+    private string StringMe(object? value) => value switch
+    {
+        null => "nil",
+        bool b => b.ToString().ToLower(),
+        double d => d.ToString("G", CultureInfo.InvariantCulture),
+        _ => value.ToString()!
+    };
     
     private bool IsTruthy(object? value) {
         return value switch {
