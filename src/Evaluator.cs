@@ -1,6 +1,18 @@
 class Evaluator {
     // returns objects 
-    public object? Evaluate(Expr expr)
+    private readonly List<object?> _results = new List<object?>();
+    private readonly IReadOnlyList<Expr> _expressions = [];
+    public IReadOnlyList<object?> Results => _results;
+    public Evaluator(IReadOnlyList<Expr> expressions) => _expressions = expressions;
+    public void Run()
+    {
+        foreach (Expr expr in _expressions)
+        {
+                object? result = Evaluate(expr);
+                _results.Add(result);
+        }   
+    }
+    private object? Evaluate(Expr expr)
     {
         switch (expr)
         {
@@ -8,6 +20,7 @@ class Evaluator {
             case Expr.Grouping g:   return Evaluate(g.Expression);
 
             case Expr.Unary u:
+            {
                 var right = Evaluate(u.Right);
                 switch (u.Operator.Type)
                 {
@@ -16,7 +29,8 @@ class Evaluator {
                     case TokenType.NOT:     return !IsTruthy(right);
                     default:                
                     throw new NotImplementedException($"Unary operator not implemented: {u.Operator.Lexeme}");
-                };
+                }
+            }
 
 
             case Expr.Binary b:
