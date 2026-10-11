@@ -104,6 +104,8 @@ class Scanner {
             case '/': AddToken(TokenType.SLASH); break;
             case '%': AddToken(TokenType.MOD); break;
             case '^': AddToken(TokenType.EXP); break;
+            case '[': AddToken(TokenType.LEFT_BRACKET); break;
+            case ']': AddToken(TokenType.RIGHT_BRACKET); break;
 
             // tokens that can be more than one character
             case '*': 
