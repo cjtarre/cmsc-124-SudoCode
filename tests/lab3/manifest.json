@@ -1,0 +1,6 @@
+{
+  "ext": ".mylang",
+  "flag": "--eval",
+  "mode": "inline",
+  "comment_prefix": ">>"
+}

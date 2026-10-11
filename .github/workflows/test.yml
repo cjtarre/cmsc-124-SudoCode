@@ -15,3 +15,4 @@ jobs:
       - run: python3 run_tests.py tests/lab0
       - run: python3 run_tests.py tests/lab1
       - run: python3 run_tests.py tests/lab2
+      - run: python3 run_tests.py tests/lab3
