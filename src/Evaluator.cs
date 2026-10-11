@@ -2,14 +2,33 @@ class Evaluator {
     // returns objects 
     private readonly List<object?> _results = new List<object?>();
     private readonly IReadOnlyList<Expr> _expressions = [];
+    private List<string> errorMessages = [];
+    public bool HasErrors => errorMessages.Count > 0;
     public IReadOnlyList<object?> Results => _results;
     public Evaluator(IReadOnlyList<Expr> expressions) => _expressions = expressions;
+
+    private class EvaluationErrorException : Exception {
+        public EvaluationErrorException(string message) : base(message) {}
+    }
+
+    private EvaluationErrorException Error(string message, Token? t = null) {
+        string Message() => "Runtime Error: " + message;
+        if (t != null)  errorMessages.Add($"[Line {t.Line}] {Message()}");
+        else            errorMessages.Add($"{Message()}");
+        return new EvaluationErrorException(message);
+    }
+
     public void Run()
     {
         foreach (Expr expr in _expressions)
         {
+            try {
                 object? result = Evaluate(expr);
                 _results.Add(result);
+            }
+            catch (EvaluationErrorException) {
+                break;
+            }
         }   
     }
     private object? Evaluate(Expr expr)
@@ -27,8 +46,8 @@ class Evaluator {
                     case TokenType.MINUS:   CheckNumberOperand(u.Operator, right);
                                             return -(double)right!;
                     case TokenType.NOT:     return !IsTruthy(right);
-                    default:                
-                    throw new NotImplementedException($"Unary operator not implemented: {u.Operator.Lexeme}");
+                    default:      
+                    throw Error($"Unary operator not implemented: {u.Operator.Lexeme}", u.Operator);          
                 }
             }
 
@@ -60,12 +79,12 @@ class Evaluator {
                     case TokenType.EXP:         CheckNumberOperands(b.Operator, left, rightBinary);
                                                 return Math.Pow((double)left!, (double)rightBinary!);
 
-                    default:
-                        throw new NotImplementedException($"Binary operator not implemented: {b.Operator.Lexeme}");
+                    default: 
+                    throw Error($"Binary operator not implemented: {b.Operator.Lexeme}", b.Operator);
                 }
 
             default:
-                throw new NotImplementedException($"Evaluation not implemented for expression type: {expr.GetType().Name}");
+            throw Error($"Evaluation not implemented for expression type: {expr.GetType().Name}");
         }
     }
     
@@ -79,11 +98,11 @@ class Evaluator {
 
     private void CheckNumberOperand(Token op, object? operand) {
         if (operand is double) return;
-        throw new InvalidOperationException($"Operand must be a number for operator '{op.Lexeme}'");
+        throw Error($"Operand must be a number for operator '{op.Lexeme}'", op);
     }
 
     private void CheckNumberOperands(Token op, object? left, object? right) {
         if (left is double && right is double) return;
-        throw new InvalidOperationException($"Operands must be numbers for operator '{op.Lexeme}'");
+        throw Error($"Operands must be numbers for operator '{op.Lexeme}'", op);
     }
 }
