@@ -18,6 +18,38 @@ class Evaluator {
                     throw new NotImplementedException($"Unary operator not implemented: {u.Operator.Lexeme}");
                 };
 
+
+            case Expr.Binary b:
+                var left = Evaluate(b.Left);
+                var rightBinary = Evaluate(b.Right);
+                switch (b.Operator.Type)
+                {
+                    case TokenType.PLUS:
+                        if (left is double lNum && rightBinary is double rNum)  return lNum + rNum;
+                        if (left is string lStr && rightBinary is string rStr)  return lStr + rStr;
+                        throw new InvalidOperationException($"Operands must be two numbers or two strings for operator '{b.Operator.Lexeme}'");
+                    
+                    case TokenType.MINUS:       CheckNumberOperands(b.Operator, left, rightBinary);
+                                                return (double)left! - (double)rightBinary!;
+
+                    case TokenType.STAR:        CheckNumberOperands(b.Operator, left, rightBinary);
+                                                return (double)left! * (double)rightBinary!;
+                                                
+                    case TokenType.SLASH:       CheckNumberOperands(b.Operator, left, rightBinary);
+                        if ((double)rightBinary! == 0) throw new InvalidOperationException("Division by zero");
+                                                return (double)left! / (double)rightBinary!;
+                                                
+                    case TokenType.MOD:         CheckNumberOperands(b.Operator, left, rightBinary);
+                        if ((double)rightBinary! == 0) throw new InvalidOperationException("Division by zero");
+                                                return (double)left! % (double)rightBinary!;
+
+                    case TokenType.EXP:         CheckNumberOperands(b.Operator, left, rightBinary);
+                                                return Math.Pow((double)left!, (double)rightBinary!);
+
+                    default:
+                        throw new NotImplementedException($"Binary operator not implemented: {b.Operator.Lexeme}");
+                }
+
             default:
                 throw new NotImplementedException($"Evaluation not implemented for expression type: {expr.GetType().Name}");
         }
