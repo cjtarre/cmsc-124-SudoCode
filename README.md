@@ -50,6 +50,7 @@ All keywords in this language are defined and written in uppercase.
 ### Master Token Registry
 ```
 LEFT_PAREN  RIGHT_PAREN
+LEFT_BRACKET  RIGHT_BRACKET
 PLUS  MINUS  STAR  SLASH  MOD EXP
 ASSIGN  EQUAL  NOT_EQUAL  LESSER  LESSER_EQUAL  GREATER  GREATER_EQUAL
 IDENTIFIER  STRING  NUMBER
@@ -139,7 +140,7 @@ primary         → NUMBER | STRING | "TRUE" | "FALSE" | "NIL" |
                   IDENTIFIER | "(" expression ")"
 ```
 Notes on deviations from the textbook grammar:
-- `assignment` is right-associative and checked structurally rather than by looking ahead for `IDENTIFIER "<-"`: the parser parses the left side as a full `logicalOr` expression first, then verifies at runtime that the result is a valid assignment target (an `Expr.Variable`). An invalid target (e.g. `1 + 1 <- 5`) is a parse error, not a scan error.
+- `assignment` is right-associative and checked structurally rather than by looking ahead for `IDENTIFIER "<-"`: the parser parses the left side as a full `logicalOr` expression first, then verifies at parse time that the result is a valid assignment target (an `Expr.Variable`). An invalid target (e.g. `1 + 1 <- 5`) is a parse error, not a scan error.
 - `^` and `**` (exponentiation) are right-associative, matching mathematical convention (`2^3^2` parses as `2^(3^2)`, not `(2^3)^2`).
 - Unary `-` sits between `factor` and `power`, binding tighter than `*`/`/` but looser than `^`. This means `-2^2` parses as `-(2^2) = -4`, matching the reading Python and standard mathematical notation use, rather than `(-2)^2 = 4`.
 - `NOT` sits above `comparison` (looser), not down near `factor`/`term`, so that `NOT a = b` parses as `NOT (a = b)` rather than `(NOT a) = b`.
@@ -240,9 +241,9 @@ Message format:
 ### Lab 1 Tests
 | Test | Coverage |
 |---|---|
-| `00_keywords` | All tokens in token registry are readable by the scanner.  |
+| `00_keywords` | All keyword tokens in token registry are read by the scanner.  |
 | `01_identifiers` | Scanner can read variations with variable names. |
-| `02_operators` | Scanner can recognize the correct keyword for each symbol and operator. |
+| `02_operators` | All operator tokens in token registry are recognized for each symbol and operator. |
 | `03_strings` | Scanner properly reads strings (treating backslashes as literal text). |
 | `04_numbers` | All numbers are stored with the correct floating value, with ints defaulted to use 1 decimal place. |
 | `05_comments` | Comments ignore all character following its lexeme.  |
@@ -306,7 +307,7 @@ Output:
 ## Design rationale
 `SudoCode` was intentionally designed to capture the structural clarity of classic academic pseudocode while eliminating C-style syntax clutter. We explicitly decoupled our keywords to follow simple, clean, individual token blocks (such as processing `END` and `IF` as separate tokens rather than a single compound lexeme), allowing our upcoming parser rules to safely establish scope logic. We chose to separate declaration (`INITIALIZE`) from mutation (`SET`) to enforce absolute clarity when reading state transformations. 
 
-Our most significant mid-design pivot was removing the dual assignment meaning of the `TO` keyword. Originally conceptualized for assignments (e.g., `SET x TO 5`), this created a parsing ambiguity with traditional `FOR i IN 1 TO 10` iteration limits. We resolved this conflict by adopting the universal pseudocode assignment arrow (`<-`) and reserving `TO` strictly for loop boundaries. We also opted out of using standard brackets or curly braces, leaning entirely into matching text boundaries (like `IF` paired with `END IF`) to keep program code clean, flowing, and readable. It was also decided to allow for alternative symbols such as `\|\|` and `&&` for shorthand input for more flexible code with the conceptualized language. 
+Our most significant mid-design pivot was removing the dual assignment meaning of the `TO` keyword. Originally conceptualized for assignments (e.g., `SET x TO 5`), this created a parsing ambiguity with traditional `FOR i IN 1 TO 10` iteration limits. We resolved this conflict by adopting the universal pseudocode assignment arrow (`<-`) and reserving `TO` strictly for loop boundaries. We also opted out of using curly braces, leaning entirely into matching text boundaries (like `IF` paired with `END IF`) to keep program code clean, flowing, and readable. It was also decided to allow for alternative symbols such as `\|\|` and `&&` for shorthand input for more flexible code with the conceptualized language. 
 
 ## Known limitations
 - Standard multi-line block commenting structures are completely unsupported; documentation annotations are restricted strictly to single-line `>>` prefixes.
