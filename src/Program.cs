@@ -56,11 +56,27 @@ static Parser? Parse(string path) {
 }
 
 static Evaluator? EvaluateSource(string source) {
-    return null; // not yet implemented
+    Parser? parser = ParseSource(source);
+    if (parser == null) return null;
+    if (parser.HasErrors) {
+        foreach (string error in parser.ErrorMessages) Console.Error.WriteLine(error);
+        return null;
+    }
+    try {
+        Evaluator evaluator = new Evaluator(parser.Expressions);
+        evaluator.Run();
+        return evaluator;
+
+    } catch (Exception error) {
+        Fail($"error while evaluating: {error.Message}");
+        return null;
+    }
 }
 
 static Evaluator? Evaluate(string path) {
-    return null; // not yet implemented
+    string? source = LoadSource(path);
+    if (source == null) return null;
+    return EvaluateSource(source);
 }
 
 
@@ -70,8 +86,8 @@ static void REPL() {
         Console.Write("> ");
         string? line = Console.ReadLine();
         if (line == null) break;
-        Parser? parser = ParseSource(line);
-        parser?.PrintAST(1);
+        Evaluator? evaluator = EvaluateSource(line);
+        evaluator?.PrintResults(1);
     }
 }
 
@@ -96,7 +112,11 @@ switch (args[0]) {
         parser?.PrintAST();
         break;
     case "--eval":
-    // not yet implemented
+        if (args.Length != 2) Fail("expected --eval <source-file>");
+        path = args[1];
+        Evaluator? evaluator = Evaluate(path);
+        if (evaluator == null) Environment.Exit(65);
+        evaluator?.PrintResults();
         break;
     case "--version":
         Console.WriteLine("SudoCode 0.1.0");

@@ -32,6 +32,16 @@ class Evaluator {
             }
         }   
     }
+
+    public void PrintResults(int mode = 0) 
+    {
+        if (HasErrors) {
+            foreach (string error in errorMessages) Console.Error.WriteLine(error);     
+            if (mode == 0) Environment.Exit(70);
+            return;
+        }
+        foreach (object? result in _results) Console.WriteLine(StringMe(result));
+    }
     private object? Evaluate(Expr expr)
     {
         switch (expr)
