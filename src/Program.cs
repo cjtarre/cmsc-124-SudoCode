@@ -55,6 +55,15 @@ static Parser? Parse(string path) {
     return ParseSource(source);
 }
 
+static Evaluator? EvaluateSource(string source) {
+    return null; // not yet implemented
+}
+
+static Evaluator? Evaluate(string path) {
+    return null; // not yet implemented
+}
+
+
 static void REPL() {
     Console.WriteLine("SudoCode REPL 0.1.0 (Press Ctrl+C to exit)");
     while (true) {
@@ -85,6 +94,9 @@ switch (args[0]) {
         Parser? parser = Parse(path);
         if (parser == null) Environment.Exit(65);
         parser?.PrintAST();
+        break;
+    case "--eval":
+    // not yet implemented
         break;
     case "--version":
         Console.WriteLine("SudoCode 0.1.0");
