@@ -2,10 +2,6 @@
 using System.IO;
 using System.Text;
 
-static void Fail(string message){
-    Console.Error.WriteLine($"SudoCode: {message}");
-    Environment.Exit(65);
-}
 
 static string? LoadSource(string path) {
     try {
