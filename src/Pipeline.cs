@@ -13,6 +13,10 @@ static class Pipeline {
         if (Gate(ExitCode.StaticError) is {} scanFailed) return scanFailed;
         if (stage == Stage.Tokenize)    return Finish(tokens);
         
+        // parse
+        var ast = new Parser(tokens, e).Run();
+        if (Gate(ExitCode.StaticError) is {} parseFailed) return parseFailed;
+        if (stage == Stage.Parse)       return Finish(ast.Select(Expr.Print).ToList());
         return Finish(res);
     }
 

@@ -1,11 +1,12 @@
 class Parser {
     // fields and properties
-    private readonly List<Expr> _expr = [];
     private readonly IReadOnlyList<Token> _tokens = [];
-    public IReadOnlyList<Expr> Expressions => _expr;
     private readonly ErrorHandler _error;
 
+    // rework to produce a tree of expressions instead of a list
+    private readonly List<Expr> _expr = [];
 
+    // marker references
     private int _current = 0;
     private int? _expressionLine = null;
 
@@ -54,7 +55,7 @@ class Parser {
     }
 
     // core parsing methods
-    public void Parse() {
+    public IReadOnlyList<Expr> Run() {
         while (!IsAtEnd()) {
             try {
                 _expressionLine = Peek().Line;
@@ -68,6 +69,7 @@ class Parser {
             // attempt to recover at the next line
             catch (ParseError) { Synchronize(); }
         }
+        return _expr;
     }
 
     private void Synchronize() {
