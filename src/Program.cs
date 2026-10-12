@@ -2,21 +2,29 @@
 using System.IO;
 using System.Text;
 
+Console.OutputEncoding = Encoding.UTF8;
 
-static string? LoadSource(string path) {
-    try {
-        return File.ReadAllText(path, Encoding.UTF8);
-    } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
-        Fail($"cannot read '{path}': {error.Message}");
-    } catch (Exception error) {
-        Fail($"error while reading '{path}': {error.Message}");
+ExitCode code = args switch {
+    ["--tokenize",  var p]  => LoadSource(p, Stage.Tokenize),
+    ["--parse",     var p]  => LoadSource(p, Stage.Parse),
+    ["--eval",      var p]  => LoadSource(p, Stage.Eval),
+};
+return (int)code;
+
+static ExitCode Execute(string source, Stage stage) {
+    try { return Pipeline.Run(source, stage); }
+    catch (Exception e) {
+        Console.Error.WriteLine($"SudoCode: {e.Message}");
+        return ExitCode.RuntimeError;
     }
-    return null;
 }
 
-    }
-}
-
+static ExitCode LoadSource(string path, Stage stage) {
+    try { return Execute(File.ReadAllText(path, Encoding.UTF8), stage); }
+    catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+        Console.Error.WriteLine($"SudoCode: cannot read '{path}': {error.Message}");
+        return ExitCode.StaticError;
+    } 
 }
 
 }
