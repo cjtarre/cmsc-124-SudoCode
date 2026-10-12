@@ -2,13 +2,25 @@ class Parser {
     // fields and properties
     private readonly List<Expr> _expr = [];
     private readonly IReadOnlyList<Token> _tokens = [];
-    private List<string> errorMessages = [];
-    public bool HasErrors => errorMessages.Count > 0;
     public IReadOnlyList<Expr> Expressions => _expr;
-    public IReadOnlyList<string> ErrorMessages => errorMessages;
-    public Parser(IReadOnlyList<Token> tokens) => _tokens = tokens;
+    private readonly ErrorHandler _error;
+
+
     private int _current = 0;
     private int? _expressionLine = null;
+
+    // constructor
+    public Parser(IReadOnlyList<Token> tokens, ErrorHandler error) {
+        _tokens = tokens;
+        _error = error;
+    }
+
+    // error handling
+    private class ParseError : Exception { public ParseError(string message) : base(message) {} }
+    private ParseError Error(string message, Token token) {
+        _error.Report("Parse", message, token);
+        return new ParseError(message);
+    }
     
     // helper methods
     private bool Match (params TokenType[] types) { // checks and advances if true
@@ -34,21 +46,13 @@ class Parser {
         return Previous();
     }
     private Token Consume(TokenType type, string message) {
-        if (_expressionLine != null && Peek().Line != _expressionLine) {
-            throw Error(Peek(), message);
-        }
-
+        if (_expressionLine != null && Peek().Line != _expressionLine)
+            throw Error(message, Peek());
+        
         if (Check(type)) return Advance();
-        throw Error(Peek(), message);
+        throw Error(message, Peek());
     }
-    private class ParseErrorException : Exception {
-        public ParseErrorException(string message) : base(message) {}
-    }
-    private ParseErrorException Error(Token token, string message) {
-        errorMessages.Add($"[Line {token.Line}] Parsing Error: {message}");
-        return new ParseErrorException(message);
-    }
-    
+
     // core parsing methods
     public void Parse() {
         while (!IsAtEnd()) {
@@ -58,31 +62,20 @@ class Parser {
 
                 // only one expression is allowed per line
                 if (!IsAtEnd() && Peek().Line == _expressionLine) {
-                    throw Error(Peek(), "Expected end of expression.");
+                    throw Error("Expected end of expression.", Peek());
                 }
             }
-            catch (ParseErrorException) {
-                Synchronize();          // attempt to recover at the next line
-            }
-            finally {
-                _expressionLine = null;
-            }
+            // attempt to recover at the next line
+            catch (ParseError) { Synchronize(); }
         }
     }
+
     private void Synchronize() {
         Advance();                  // consume the erroneous token
         while (!IsAtEnd()) {        // keep advancing until we find a statement boundary (by line for now)
             if (Previous().Line != Peek().Line) return;
             Advance();
         }
-    }
-    public void PrintAST(int mode = 0){
-        if (HasErrors) {
-            foreach (string error in errorMessages) Console.Error.WriteLine(error);
-            if (mode == 0) Environment.Exit(65);
-            return;
-        }
-        foreach (Expr expr in _expr) Console.WriteLine(Expr.Print(expr));
     }
 
     // grammar rules (operations ordered by precedence from lowest to highest)
@@ -95,7 +88,7 @@ class Parser {
             if (expr is Expr.Variable v) {      // check if the left-hand side is a valid assignment target (a variable)
                 return new Expr.Assignment(v.Name, value);
             }
-            throw Error(op, "Invalid assignment target.");  // if the left-hand side is not a variable, throw an error
+            throw Error("Invalid assignment target.", op);  // if the left-hand side is not a variable, throw an error
         }
         return expr;
     }
@@ -186,6 +179,6 @@ class Parser {
             Consume(TokenType.RIGHT_PAREN, "Expected ')' after expression.");
             return new Expr.Grouping(expr);
         }
-        throw Error(Peek(), "Expected expression.");
+        throw Error("Expected expression.", Peek());
     }
 }
