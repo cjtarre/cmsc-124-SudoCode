@@ -48,7 +48,6 @@ class Scanner {
 
         ["MOD"] = TokenType.MOD
         };
-    public IReadOnlyList<Token> Tokens => _tokens;
     
     // marker references
     private int _current = 0;
@@ -78,11 +77,11 @@ class Scanner {
     private void AddToken(TokenType type, object? literal = null) 
         => _tokens.Add(new Token(type, _source[_start .. _current], literal, _line));
     
-    // core scanner methods
-    public void ScanTokens() {
+    public IReadOnlyList<Token> Run(){
         while (!IsAtEnd()) {_start = _current; ScanToken();}
         _start = _source.Length;
         AddToken(TokenType.EOF);
+        return _tokens;
     }
 
     private void ScanToken() {

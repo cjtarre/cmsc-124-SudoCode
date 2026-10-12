@@ -8,6 +8,23 @@ static class Pipeline {
         ExitCode? Gate(ExitCode failcon) => 
             e.HasErrors ? Finish(e, failcon) : null;
 
+        // tokenize
+        var tokens = new Scanner(source, e).Run();
+        if (Gate(ExitCode.StaticError) is {} scanFailed) return scanFailed;
+        if (stage == Stage.Tokenize)    return Finish(tokens);
+        
+        return Finish(res);
+    }
+
+    // error printer finish
+    private static ExitCode Finish(ErrorHandler e, ExitCode failcon) {
+        foreach (var error in e.Items) Console.Error.WriteLine(error);
+        return e.HasErrors ? failcon : ExitCode.Success;
+    }
+
+    // generic printer finish
+    private static ExitCode Finish<T>(IReadOnlyList<T> items) {
+        foreach (var item in items) Console.WriteLine(item);
         return ExitCode.Success;
     }
 }
