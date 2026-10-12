@@ -4,7 +4,6 @@ class Evaluator {
     // returns objects 
     private readonly List<object?> _results = new List<object?>();
     private readonly IReadOnlyList<Expr> _expressions = [];
-    public IReadOnlyList<object?> Results => _results;
     private readonly ErrorHandler _error;
 
     // constructor
@@ -24,7 +23,7 @@ class Evaluator {
         return new RuntimeError(message);
     }
 
-    public void Run()
+    public IReadOnlyList<object?> Run()
     {
         foreach (Expr expr in _expressions)
         {
@@ -36,6 +35,7 @@ class Evaluator {
                 ;
             }
         }
+        return _results;
     }
 
     private object? Evaluate(Expr expr)

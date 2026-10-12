@@ -17,6 +17,10 @@ static class Pipeline {
         var ast = new Parser(tokens, e).Run();
         if (Gate(ExitCode.StaticError) is {} parseFailed) return parseFailed;
         if (stage == Stage.Parse)       return Finish(ast.Select(Expr.Print).ToList());
+
+        // eval
+        var res = new Evaluator(ast, e).Run();
+        if (Gate(ExitCode.RuntimeError) is {} evalFailed) return evalFailed;
         return Finish(res);
     }
 
