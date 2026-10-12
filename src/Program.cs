@@ -5,9 +5,12 @@ using System.Text;
 Console.OutputEncoding = Encoding.UTF8;
 
 ExitCode code = args switch {
+    []                      => REPL(),
     ["--tokenize",  var p]  => LoadSource(p, Stage.Tokenize),
     ["--parse",     var p]  => LoadSource(p, Stage.Parse),
     ["--eval",      var p]  => LoadSource(p, Stage.Eval),
+    [var p]                 => Echo(p),   
+    _                       => Usage(args)
 };
 return (int)code;
 
@@ -27,46 +30,42 @@ static ExitCode LoadSource(string path, Stage stage) {
     } 
 }
 
+static ExitCode REPL() {
+    string? Prompt() {
+        Console.Write("> ");
+        return Console.ReadLine();
+    }
+
+    Console.WriteLine("SudoCode REPL 0.1.0 (Press Ctrl+C to exit)");
+    while (Prompt() is {} line ) Execute(line, Stage.Eval);
+                                                // change Stage to any desired lab 
+    return ExitCode.Success;
 }
 
+static ExitCode Usage(string[] args) {
+    switch (args.Length)
+    {   
+        case 0:
+            Console.WriteLine("SudoCode: no arguments provided");
+            break;
+        case 2 when args[0] is not ("--tokenize" or "--parse" or "--eval"):
+            Console.WriteLine($"SudoCode: unknown option '{args[0]}'");
+            break;
+        case 2 when !File.Exists(args[1]):
+            Console.WriteLine($"SudoCode: file '{args[1]}' does not exist");
+            break;
+    }
+    Console.WriteLine("Usage: sudo [ --tokenize | --parse | --eval ] <source-file>");
+    return ExitCode.StaticError;
+}
 
-static void REPL() {
-    Console.WriteLine("SudoCode REPL 0.1.0 (Press Ctrl+C to exit)");
-    while (true) {
-        Console.Write("> ");
-        string? line = Console.ReadLine();
-        if (line == null) break;
+static ExitCode Echo(string source) {
+    try {
+        Console.Write(File.ReadAllText(source, Encoding.UTF8));
+        return ExitCode.Success;
+    } catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+    {
+        Console.Error.WriteLine($"SudoCode: cannot read '{source}': {error.Message}");
+        return ExitCode.StaticError;
     }
 }
-
-// Main program entry point
-if (args.Length == 0) {
-    REPL();
-    return 0;
-}
-string path;
-switch (args[0]) {
-    case "--tokenize":
-    case "--parse":
-    case "--eval":
-        if (args.Length != 2) Fail("expected --eval <source-file>");
-        path = args[1];
-        break;
-    case "--version":
-        Console.WriteLine("SudoCode 0.1.0");
-        break;
-    default:
-        if (args.Length != 1) {
-            Fail("expected a source-file path");
-        }
-        path = args[0];
-        try {
-            Console.OutputEncoding = Encoding.UTF8;
-            Console.Write(File.ReadAllText(path, Encoding.UTF8));
-            Environment.Exit(0);
-        } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
-            Fail($"cannot read '{path}': {error.Message}");
-        } 
-        break;
-}
-return 0;
