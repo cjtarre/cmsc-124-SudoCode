@@ -1,22 +1,27 @@
 using System.Globalization;
+
 class Evaluator {
     // returns objects 
     private readonly List<object?> _results = new List<object?>();
     private readonly IReadOnlyList<Expr> _expressions = [];
-    private List<string> errorMessages = [];
-    public bool HasErrors => errorMessages.Count > 0;
     public IReadOnlyList<object?> Results => _results;
-    public Evaluator(IReadOnlyList<Expr> expressions) => _expressions = expressions;
+    private readonly ErrorHandler _error;
 
-    private class EvaluationErrorException : Exception {
-        public EvaluationErrorException(string message) : base(message) {}
+    // constructor
+    public Evaluator(IReadOnlyList<Expr> expressions, ErrorHandler error) {
+        _expressions = expressions;
+        _error = error;
     }
 
-    private EvaluationErrorException Error(string message, Token? t = null) {
-        string Message() => "Runtime Error: " + message;
-        if (t != null)  errorMessages.Add($"[Line {t.Line}] {Message()}");
-        else            errorMessages.Add($"{Message()}");
-        return new EvaluationErrorException(message);
+    // error handling
+    private class RuntimeError : Exception { public RuntimeError(string message) : base(message) {} }
+    private RuntimeError Error(string message, Token token) {
+        _error.Report("Runtime", message, token);
+        return new RuntimeError(message);
+    }
+    private RuntimeError Error(string message) {
+        _error.Report("Runtime", message);
+        return new RuntimeError(message);
     }
 
     public void Run()
@@ -27,25 +32,15 @@ class Evaluator {
                 object? result = Evaluate(expr);
                 _results.Add(result);
             }
-            catch (EvaluationErrorException) {
+            catch (RuntimeError) {
                 ;
             }
-        }   
+        }
     }
 
-    public void PrintResults(int mode = 0) 
-    {
-        if (HasErrors) {
-            foreach (string error in errorMessages) Console.Error.WriteLine(error);     
-            if (mode == 0) Environment.Exit(70);
-            return;
-        }
-        foreach (object? result in _results) Console.WriteLine(StringMe(result));
-    }
     private object? Evaluate(Expr expr)
     {
-        switch (expr)
-        {
+        switch (expr) {
             case Expr.Literal l:    return l.Value;
             case Expr.Grouping g:   return Evaluate(g.Expression);
 
@@ -98,7 +93,10 @@ class Evaluator {
             }
 
             default:
-            throw Error($"Evaluation not implemented for expression type: {expr.GetType().Name}");
+            {   
+                // flat out just dont include a line number for now
+                throw Error($"Evaluation not implemented for expression type: {expr.GetType().Name}");
+            }
         }
     }
 
