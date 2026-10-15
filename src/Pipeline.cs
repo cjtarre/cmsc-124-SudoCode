@@ -16,7 +16,7 @@ static class Pipeline {
         // parse
         var ast = new Parser(tokens, e).Run();
         if (Gate(ExitCode.StaticError) is {} parseFailed) return parseFailed;
-        if (stage == Stage.Parse)       return Finish(ast.Select(Expr.Print).ToList());
+        if (stage == Stage.Parse)       return Finish(Expr.Print(ast));
 
         // eval
         var res = new Evaluator(ast, e).Run();
@@ -28,6 +28,12 @@ static class Pipeline {
     private static ExitCode Finish(ErrorHandler e, ExitCode failcon) {
         foreach (var error in e.Items) Console.Error.WriteLine(error);
         return e.HasErrors ? failcon : ExitCode.Success;
+    }
+
+    // string printer finish
+    private static ExitCode Finish(string output) {
+        Console.WriteLine(output);
+        return ExitCode.Success;
     }
 
     // generic printer finish

@@ -3,12 +3,12 @@ using System.Globalization;
 class Evaluator {
     // returns objects 
     private readonly List<object?> _results = new List<object?>();
-    private readonly IReadOnlyList<Expr> _expressions = [];
+    private readonly Expr _AST;
     private readonly ErrorHandler _error;
 
     // constructor
-    public Evaluator(IReadOnlyList<Expr> expressions, ErrorHandler error) {
-        _expressions = expressions;
+    public Evaluator(Expr ast, ErrorHandler error) {
+        _AST = ast;
         _error = error;
     }
 
@@ -25,7 +25,8 @@ class Evaluator {
 
     public IReadOnlyList<object?> Run()
     {
-        foreach (Expr expr in _expressions)
+        var _expr = _AST is Expr.Sequence s ? s.Expressions : [_AST];
+        foreach (Expr expr in _expr)
         {
             try {
                 object? result = Evaluate(expr);

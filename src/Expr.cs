@@ -3,6 +3,7 @@ using System.Globalization;
 // also contains the AST node definitions
 public abstract record Expr {
     // constructors for different expression types (ref: Module)
+    public record Sequence(IReadOnlyList<Expr> Expressions) : Expr {}
     public record Literal(object? Value) : Expr;
     public record Variable(Token Name) : Expr;
     public record Unary(Token Operator, Expr Right) : Expr;
@@ -24,6 +25,7 @@ public abstract record Expr {
         Unary u         => $"({u.Operator.Lexeme} {Print(u.Right)})",
         Binary b        => $"({b.Operator.Lexeme} {Print(b.Left)} {Print(b.Right)})",
         Assignment a    => $"(assign {a.Name.Lexeme} {Print(a.Value)})",
+        Sequence s      => string.Join("\n", s.Expressions.Select(Print)),
         _ => throw new NotImplementedException($"Print not implemented for {expr.GetType().Name}")
     };
 }
