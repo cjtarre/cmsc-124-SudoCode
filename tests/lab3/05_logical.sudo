@@ -1,0 +1,15 @@
+NOT TRUE            >> expect: false
+NOT FALSE           >> expect: true
+NOT NIL             >> expect: true
+NOT 0               >> expect: false
+NOT ""              >> expect: false
+TRUE AND TRUE       >> expect: true
+TRUE AND FALSE      >> expect: false
+FALSE OR TRUE       >> expect: true
+FALSE OR FALSE      >> expect: false
+TRUE XOR FALSE      >> expect: true
+TRUE XOR TRUE       >> expect: false
+NIL OR TRUE         >> expect: true
+NIL AND TRUE        >> expect: false
+0 AND TRUE          >> expect: true
+"" OR FALSE         >> expect: true

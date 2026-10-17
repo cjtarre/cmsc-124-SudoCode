@@ -1,0 +1,5 @@
+"hello" + " world"    >> expect: hello world
+"value: " + 5         >> expect: value: 5
+5 + " items"          >> expect: 5 items
+"result: " + TRUE     >> expect: result: true
+"nothing: " + NIL     >> expect: nothing: nil
