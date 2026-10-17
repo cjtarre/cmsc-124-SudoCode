@@ -88,6 +88,23 @@ class Evaluator {
                     case TokenType.EXP:         CheckNumberOperands(b.Operator, left, right);
                                                 return Math.Pow((double)left!, (double)right!);
 
+                    // comparison
+                    case TokenType.GREATER:
+                        CheckNumberOperands(b.Operator, left, right);
+                        return (double)left! > (double)right!;
+
+                    case TokenType.GREATER_EQUAL:
+                        CheckNumberOperands(b.Operator, left, right);
+                        return (double)left! >= (double)right!;
+
+                    case TokenType.LESSER:
+                        CheckNumberOperands(b.Operator, left, right);
+                        return (double)left! < (double)right!;
+
+                    case TokenType.LESSER_EQUAL:
+                        CheckNumberOperands(b.Operator, left, right);
+                        return (double)left! <= (double)right!;
+
                     default: 
                     throw Error($"Binary operator not implemented: {b.Operator.Lexeme}", b.Operator);
                 }
