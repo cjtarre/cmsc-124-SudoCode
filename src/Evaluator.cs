@@ -33,7 +33,7 @@ class Evaluator {
                 _results.Add(result);
             }
             catch (RuntimeError) {
-                ;
+                break;
             }
         }
         return _results;
