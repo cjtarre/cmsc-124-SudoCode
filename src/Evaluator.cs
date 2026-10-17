@@ -65,6 +65,7 @@ class Evaluator {
                 var right = Evaluate(b.Right);
                 switch (b.Operator.Type)
                 {
+                    // arithmetic
                     case TokenType.PLUS:
                         if (left is double lNum && right is double rNum)  return lNum + rNum;
                         if (left is string || right is string)  return StringMe(left) + StringMe(right);
@@ -89,25 +90,27 @@ class Evaluator {
                                                 return Math.Pow((double)left!, (double)right!);
 
                     // comparison
-                    case TokenType.GREATER:
-                        CheckNumberOperands(b.Operator, left, right);
-                        return (double)left! > (double)right!;
+                    case TokenType.GREATER:     CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! > (double)right!;
 
-                    case TokenType.GREATER_EQUAL:
-                        CheckNumberOperands(b.Operator, left, right);
-                        return (double)left! >= (double)right!;
+                    case TokenType.GREATER_EQUAL:CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! >= (double)right!;
 
-                    case TokenType.LESSER:
-                        CheckNumberOperands(b.Operator, left, right);
-                        return (double)left! < (double)right!;
+                    case TokenType.LESSER:      CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! < (double)right!;
 
-                    case TokenType.LESSER_EQUAL:
-                        CheckNumberOperands(b.Operator, left, right);
-                        return (double)left! <= (double)right!;
+                    case TokenType.LESSER_EQUAL:CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! <= (double)right!;
 
-                    case TokenType.EQUAL: return IsEqual(left, right);
+                    // equality
+                    case TokenType.EQUAL:       return IsEqual(left, right);
                     case TokenType.NOT_EQUAL:   return !IsEqual(left, right);
 
+                    // logical
+                    case TokenType.AND:         return IsTruthy(left) && IsTruthy(right);
+                    case TokenType.OR:          return IsTruthy(left) || IsTruthy(right);
+                    case TokenType.XOR:         return IsTruthy(left) ^ IsTruthy(right);
+                    
                     default: 
                     throw Error($"Binary operator not implemented: {b.Operator.Lexeme}", b.Operator);
                 }
