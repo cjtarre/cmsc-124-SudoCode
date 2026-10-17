@@ -1,0 +1,10 @@
+3 = 3                   >> expect: true
+3 != 3                  >> expect: false
+3 != 4                  >> expect: true
+"hello" = "hello"       >> expect: true
+"hello" != "world"      >> expect: true
+TRUE = TRUE             >> expect: true
+TRUE = FALSE            >> expect: false
+NIL = NIL               >> expect: true
+NIL = FALSE             >> expect: false
+3 = "3"                 >> expect: false

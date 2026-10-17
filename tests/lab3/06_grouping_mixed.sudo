@@ -1,0 +1,8 @@
+(1 + 2) * 3                    >> expect: 9
+1 + 2 * 3                      >> expect: 7
+(2 + 3) ^ 2                    >> expect: 25
+NOT (3 < 2)                    >> expect: true
+(3 < 4) AND (5 >= 5)           >> expect: true
+(2 + 3 * 4) = 14               >> expect: true
+"answer: " + (2 + 3 * 4)       >> expect: answer: 14
+NOT ((2 + 3) * 4 = 20)         >> expect: false

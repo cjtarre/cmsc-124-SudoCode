@@ -20,8 +20,9 @@ static class Pipeline {
 
         // eval
         var res = new Evaluator(ast, e).Run();
+        Finish(res.Select(Evaluator.StringMe).ToList());
         if (Gate(ExitCode.RuntimeError) is {} evalFailed) return evalFailed;
-        return Finish(res);
+        return ExitCode.Success;
     }
 
     // error printer finish

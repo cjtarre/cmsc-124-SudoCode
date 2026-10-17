@@ -171,7 +171,6 @@ NOT 3 → (NOT 3.0)
 - Rejections: a file containing a syntax error prints nothing to stdout, reports `[Line N] Parsing Error: ...` diagnostics to stderr, and exits with code `65`. The parser attempts to recover after each error by synchronizing to the next line so multiple errors in one file can be reported in a single run.
   
 ## Semantics
-*To be defined in a later lab activity.*
 
 ### Values and types
 `SudoCode` supports four core runtime data primitive types managed dynamically in the host architecture:
@@ -183,22 +182,25 @@ NOT 3 → (NOT 3.0)
 ### Value printing
 - Numbers: Prints without trailing decimals if it is an integer representation (e.g., `5`), or with explicit fractional scales if a true floating-point value is maintained (e.g., `5.25`).
 - Strings: Extracted and printed directly to standard output without surrounding quotation marks.
+- Booleans: Prints explicitly as the lowercase textual literals `true` and `false`.
 - Nil: Prints explicitly as the lowercase textual literal `nil`.
 
 ### Truthiness
 `SudoCode` follows a strict truthiness evaluation rule:
 - Only the Boolean flag value `FALSE` and the empty object state `NIL` are interpreted as falsy conditions.
-- Every other initialized value type, object, number, or non-empty string is resolved as **true**.
+- Every other initialized value type, object, number, or string (including an empty string) is resolved as **true**.
 
 ### Operator semantics
-- Arithmetic: Requires both matching operands to be `NUMBER` types. Any alternative configuration throws a static error.
-- `+` on strings: Performs string concatenation if either operand evaluates as a string literal (e.g., `"Value: " + 5` produces `"Value: 5"`).
+- Arithmetic: Requires both matching operands to be `NUMBER` types. Any alternative configuration throws a runtime error.
+- `+`: Adds two numbers. If either operand is a string, it performs string concatenation (e.g., `"Value: " + 5` produces `"Value: 5"`).
 - Mixed types: Triggers an operational type-mismatch error unless evaluated by string concatenation setups.
 - Comparison: Allowed exclusively between numerical items.
 - Equality across types: Comparing different types (e.g., matching a string to a number) resolves directly as `false` safely without triggering a system crash.
-- Division by zero: Throws a runtime evaluation error with exit code `70`.
+- Logical operators: `NOT`, `AND`, `OR`, and `XOR` evaluate operands according to SudoCode truthiness and produce Boolean results.
+- Division or modulo by zero: Causes a runtime evaluation error with exit code `70`.
 
 ### Scope and bindings
+- Lab 3 evaluator behavior: The `<-` operator creates or updates a variable binding in the current evaluation environment. Referencing an undefined variable during evaluation causes a runtime error with exit code `70`.
 - Redeclaration in the same scope: Attempting to `INITIALIZE` a variable that already exists in the same scope causes a static analysis error exiting under code `65`.
 - Uninitialized variable holds: Cannot occur. Variables must explicitly pass through an `INITIALIZE` binding sequence, unless it is a counter variable such as in `FOR`.
 - Shadowing: Inner local block levels fully shadow broader identifier declarations safely.
@@ -219,7 +221,7 @@ Message format:
 
 ```text
 [Line 3] Lexical Error: Unexpected character '@' found in scan block.
-[Line 5] Runtime Error: Division by zero is undefined.
+[Line 5] Runtime Error: Division by zero
 ```
 
 | Failure | Exit code |
@@ -278,6 +280,24 @@ Message format:
 | `err_unclosed_group` | Rejects a parenthesized expression missing its closing `)`. |
 | `err_multiline_group` | Rejects a grouped expression whose closing parenthesis appears on a different physical line. |
 
+### Lab 3 Tests
+| Test | Coverage |
+|---|---|
+| `00_literals` | Evaluates numbers, strings, Boolean values, and `NIL`. |
+| `01_arithmetic` | Evaluates arithmetic operators and arithmetic precedence. |
+| `02_strings` | Evaluates string concatenation, including concatenation with other values. |
+| `03_comparison` | Evaluates numerical comparison operators. |
+| `04_equality` | Evaluates equality and inequality across same and different value types. |
+| `05_logical` | Evaluates `NOT`, `AND`, `OR`, and `XOR` using SudoCode truthiness rules. |
+| `06_grouping_mixed` | Evaluates grouping and expressions combining multiple operator types and precedence levels. |
+| `07_assignment` | Evaluates variable lookup, assignment, reassignment, and chained assignment. |
+| `err_arithmetic_string` | Reports a runtime error for invalid arithmetic operand types. |
+| `err_comparison_types` | Reports a runtime error for invalid comparison operand types. |
+| `err_division_zero` | Reports a runtime error for division by zero and stops further evaluation. |
+| `err_negate_nonnumber` | Reports a runtime error when unary negation is applied to a non-number. |
+| `err_static` | Reports a syntax error before evaluation for malformed input. |
+| `err_undefined_variable` | Reports a runtime error when an undefined variable is referenced. |
+
 Run locally with:
 ```bash
 curl -sSL https://raw.githubusercontent.com/WhiteLicorice/cmsc-124-harness/v1.1/run_tests.py -o run_tests.py
@@ -285,6 +305,7 @@ curl -sSL https://raw.githubusercontent.com/WhiteLicorice/cmsc-124-harness/v1.1/
 python3 run_tests.py tests/lab0
 python3 run_tests.py tests/lab1
 python3 run_tests.py tests/lab2
+python3 run_tests.py tests/lab3
 ```
 
 ## Sample code
@@ -319,3 +340,4 @@ Our most significant mid-design pivot was removing the dual assignment meaning o
 |---|---|
 | Lab 1 | Lexical specifications defined; scanner implementation and lexical rules for tokens, operators, literals, comments, and whitespace established. |
 | Lab 2 | Expression grammar defined; parser, AST representation and printer, operator precedence and associativity, assignment and logical expressions, and syntax error handling established. |
+| Lab 3 | Expression evaluation implemented; runtime values, truthiness, arithmetic, string concatenation, comparisons, equality, logical operations, variable assignment, and runtime error handling established. |

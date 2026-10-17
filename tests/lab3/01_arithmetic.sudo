@@ -1,0 +1,11 @@
+1 + 2           >> expect: 3
+10 - 4          >> expect: 6
+3 * 5           >> expect: 15
+8 / 2           >> expect: 4
+10 MOD 3        >> expect: 1
+2 ^ 3           >> expect: 8
+2 ** 3          >> expect: 8
+2 + 3 * 4       >> expect: 14
+10 - 6 / 2      >> expect: 7
+2 * 3 ^ 2       >> expect: 18
+-5 + 8          >> expect: 3

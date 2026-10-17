@@ -1,0 +1,8 @@
+3 < 4       >> expect: true
+4 < 4       >> expect: false
+4 <= 4      >> expect: true
+5 > 2       >> expect: true
+5 > 5       >> expect: false
+5 >= 5      >> expect: true
+-1 < 0      >> expect: true
+3.14 >= 3   >> expect: true

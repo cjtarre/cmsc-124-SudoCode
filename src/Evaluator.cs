@@ -5,6 +5,7 @@ class Evaluator {
     private readonly List<object?> _results = new List<object?>();
     private readonly Expr _AST;
     private readonly ErrorHandler _error;
+    private readonly Dictionary<string, object?> _environment = new();
 
     // constructor
     public Evaluator(Expr ast, ErrorHandler error) {
@@ -33,7 +34,7 @@ class Evaluator {
                 _results.Add(result);
             }
             catch (RuntimeError) {
-                ;
+                break;
             }
         }
         return _results;
@@ -45,6 +46,16 @@ class Evaluator {
             case Expr.Literal l:    return l.Value;
             case Expr.Grouping g:   return Evaluate(g.Expression);
 
+            case Expr.Variable v:
+                if (_environment.TryGetValue(v.Name.Lexeme, out var envValue)) return envValue;
+                throw Error($"Undefined variable '{v.Name.Lexeme}'", v.Name);
+
+            case Expr.Assignment a:
+            {
+                var assignedValue = Evaluate(a.Value);
+                _environment[a.Name.Lexeme] = assignedValue; return assignedValue;
+            }
+            
             case Expr.Unary u:
             {
                 var right = Evaluate(u.Right);
@@ -65,6 +76,7 @@ class Evaluator {
                 var right = Evaluate(b.Right);
                 switch (b.Operator.Type)
                 {
+                    // arithmetic
                     case TokenType.PLUS:
                         if (left is double lNum && right is double rNum)  return lNum + rNum;
                         if (left is string || right is string)  return StringMe(left) + StringMe(right);
@@ -88,6 +100,28 @@ class Evaluator {
                     case TokenType.EXP:         CheckNumberOperands(b.Operator, left, right);
                                                 return Math.Pow((double)left!, (double)right!);
 
+                    // comparison
+                    case TokenType.GREATER:     CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! > (double)right!;
+
+                    case TokenType.GREATER_EQUAL:CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! >= (double)right!;
+
+                    case TokenType.LESSER:      CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! < (double)right!;
+
+                    case TokenType.LESSER_EQUAL:CheckNumberOperands(b.Operator, left, right);
+                                                return (double)left! <= (double)right!;
+
+                    // equality
+                    case TokenType.EQUAL:       return IsEqual(left, right);
+                    case TokenType.NOT_EQUAL:   return !IsEqual(left, right);
+
+                    // logical
+                    case TokenType.AND:         return IsTruthy(left) && IsTruthy(right);
+                    case TokenType.OR:          return IsTruthy(left) || IsTruthy(right);
+                    case TokenType.XOR:         return IsTruthy(left) ^ IsTruthy(right);
+                    
                     default: 
                     throw Error($"Binary operator not implemented: {b.Operator.Lexeme}", b.Operator);
                 }
@@ -101,7 +135,7 @@ class Evaluator {
         }
     }
 
-    private string StringMe(object? value) => value switch
+    public static string StringMe(object? value) => value switch
     {
         null => "nil",
         bool b => b.ToString().ToLower(),
@@ -117,6 +151,13 @@ class Evaluator {
         };
     }
 
+    private bool IsEqual(object? left, object? right) {
+        if (left is null && right is null) return true;
+        if (left is null || right is null) return false;
+
+        return left.Equals(right);
+    }
+    
     private void CheckNumberOperand(Token op, object? operand) {
         if (operand is double) return;
         throw Error($"Operand must be a number for operator '{op.Lexeme}'", op);
