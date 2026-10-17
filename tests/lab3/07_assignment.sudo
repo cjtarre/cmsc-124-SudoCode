@@ -1,0 +1,7 @@
+x <- 5              >> expect: 5
+x                    >> expect: 5
+x + 2                >> expect: 7
+a <- b <- 10         >> expect: 10
+a + b                >> expect: 20
+x <- "hello"         >> expect: hello
+x + " world"         >> expect: hello world

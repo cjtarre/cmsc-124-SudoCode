@@ -5,6 +5,7 @@ class Evaluator {
     private readonly List<object?> _results = new List<object?>();
     private readonly Expr _AST;
     private readonly ErrorHandler _error;
+    private readonly Dictionary<string, object?> _environment = new();
 
     // constructor
     public Evaluator(Expr ast, ErrorHandler error) {
@@ -45,6 +46,16 @@ class Evaluator {
             case Expr.Literal l:    return l.Value;
             case Expr.Grouping g:   return Evaluate(g.Expression);
 
+            case Expr.Variable v:
+                if (_environment.TryGetValue(v.Name.Lexeme, out var envValue)) return envValue;
+                throw Error($"Undefined variable '{v.Name.Lexeme}'", v.Name);
+
+            case Expr.Assignment a:
+            {
+                var assignedValue = Evaluate(a.Value);
+                _environment[a.Name.Lexeme] = assignedValue; return assignedValue;
+            }
+            
             case Expr.Unary u:
             {
                 var right = Evaluate(u.Right);
