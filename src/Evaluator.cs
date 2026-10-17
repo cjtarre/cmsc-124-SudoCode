@@ -105,6 +105,9 @@ class Evaluator {
                         CheckNumberOperands(b.Operator, left, right);
                         return (double)left! <= (double)right!;
 
+                    case TokenType.EQUAL: return IsEqual(left, right);
+                    case TokenType.NOT_EQUAL:   return !IsEqual(left, right);
+
                     default: 
                     throw Error($"Binary operator not implemented: {b.Operator.Lexeme}", b.Operator);
                 }
@@ -134,6 +137,13 @@ class Evaluator {
         };
     }
 
+    private bool IsEqual(object? left, object? right) {
+        if (left is null && right is null) return true;
+        if (left is null || right is null) return false;
+
+        return left.Equals(right);
+    }
+    
     private void CheckNumberOperand(Token op, object? operand) {
         if (operand is double) return;
         throw Error($"Operand must be a number for operator '{op.Lexeme}'", op);
