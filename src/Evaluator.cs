@@ -124,7 +124,7 @@ class Evaluator {
         }
     }
 
-    private string StringMe(object? value) => value switch
+    public static string StringMe(object? value) => value switch
     {
         null => "nil",
         bool b => b.ToString().ToLower(),
