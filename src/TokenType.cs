@@ -43,6 +43,7 @@ public enum TokenType {
 
     // --- Punctuation & Separators ---
     LEFT_PAREN, RIGHT_PAREN,
+    LEFT_BRACKET, RIGHT_BRACKET,
     COMMA, COLON, DOT,
 
     // --- Dynamic Literals & Identifiers ---

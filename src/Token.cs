@@ -1,6 +1,10 @@
 using System.Globalization;
 
 public record Token(TokenType Type, string Lexeme, object? Literal, int Line){
+
+    // dead token constructor for error reporting (read error line)
+    public Token(int l) : this(TokenType.EOF, "", null, l) {}
+
     public override string ToString(){
         string literalText = Literal switch {
             null => "null",

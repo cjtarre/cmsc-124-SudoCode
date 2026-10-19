@@ -1,6 +1,7 @@
 class Scanner {
     // source code to scan
     private readonly string _source;
+    private readonly ErrorHandler _error;
     private readonly List<Token> _tokens = [];
     private static readonly Dictionary<string, TokenType> _keywords = new Dictionary<string, TokenType> {
         ["INITIALIZE"] = TokenType.INITIALIZE,
@@ -47,46 +48,40 @@ class Scanner {
 
         ["MOD"] = TokenType.MOD
         };
-    private List<string> errorMessages = [];
-    public IReadOnlyList<Token> Tokens => _tokens;
-    public IReadOnlyList<string> ErrorMessages => errorMessages;
-    public bool HasErrors => errorMessages.Count > 0;
-
+    
     // marker references
     private int _current = 0;
     private int _start = 0;
     private int _line = 1;
 
-    public Scanner(string source) => _source = source;
-    
+    // constructor
+    public Scanner(string source, ErrorHandler error){_source = source; _error = error;}
+
+    // error handling
+    private class ScanError : Exception { public ScanError(string message) : base(message) {} }
+    private ScanError Error(string message){
+        _error.Report("Lexical", message, new Token(_line));
+        return new ScanError(message);
+    }
+
     // helper methods
     private bool IsAtEnd() => _current >= _source.Length;
     private char Advance() => _source[_current++];
     private char Peek(int offset = 0) => (IsAtEnd() || _current + offset >= _source.Length) ? '\0' : _source[_current + offset];
-    
     private bool Match(char expected) {
         if (IsAtEnd()) return false;
         if (_source[_current] != expected) return false;
         _current++;
         return true;
     }
-    private void AddToken(TokenType type, object? literal = null) => _tokens.Add(new Token(type, _source[_start .. _current], literal, _line));
-    private void FlagError(string message) {
-        errorMessages.Add($"[Line {_line}] Lexical Error: {message}");
-    }
-    public void PrintTokens(int mode = 0){
-        if (HasErrors) {
-            foreach (string error in errorMessages) Console.Error.WriteLine(error);
-            if (mode == 0) Environment.Exit(65);
-        }
-        foreach (Token token in _tokens) Console.WriteLine(token);
-    }
+    private void AddToken(TokenType type, object? literal = null) 
+        => _tokens.Add(new Token(type, _source[_start .. _current], literal, _line));
     
-    // core scanner methods
-    public void ScanTokens() {
+    public IReadOnlyList<Token> Run(){
         while (!IsAtEnd()) {_start = _current; ScanToken();}
         _start = _source.Length;
         AddToken(TokenType.EOF);
+        return _tokens;
     }
 
     private void ScanToken() {
@@ -104,6 +99,8 @@ class Scanner {
             case '/': AddToken(TokenType.SLASH); break;
             case '%': AddToken(TokenType.MOD); break;
             case '^': AddToken(TokenType.EXP); break;
+            case '[': AddToken(TokenType.LEFT_BRACKET); break;
+            case ']': AddToken(TokenType.RIGHT_BRACKET); break;
 
             // tokens that can be more than one character
             case '*': 
@@ -131,7 +128,7 @@ class Scanner {
 
             case '&':
                 if (Match('&'))         AddToken(TokenType.AND);
-                else                    FlagError($"Unexpected character '{c}' found in scan block.");
+                else                    Error($"Unexpected character '{c}' found in scan block.");
                 break;
 
             // ignore whitespace
@@ -140,7 +137,7 @@ class Scanner {
 
             case '|':
                 if (Match('|'))         AddToken(TokenType.OR);
-                else                    FlagError($"Unexpected character '{c}' found in scan block.");
+                else                    Error($"Unexpected character '{c}' found in scan block.");
                 break;
 
             case '"':
@@ -150,7 +147,7 @@ class Scanner {
             default:
                 if (char.IsLetter(c) || c == '_')       ScanKeyword();
                 else if (char.IsDigit(c))               ScanNumber(); 
-                else                                    FlagError($"Unexpected character '{c}' found in scan block.");
+                else                                    Error($"Unexpected character '{c}' found in scan block.");
                 break;
         }
     }
@@ -173,7 +170,7 @@ class Scanner {
     private void ScanString() {
         // Stop at a newline because strings cannot span multiple lines.
         while (Peek() != '"' && Peek() != '\n' && !IsAtEnd()) { Advance();}
-        if (Peek() == '\n' || IsAtEnd()) { FlagError("Unterminated string."); return;}
+        if (Peek() == '\n' || IsAtEnd()) { Error("Unterminated string."); return;}
 
         Advance(); // consume closing "
 
