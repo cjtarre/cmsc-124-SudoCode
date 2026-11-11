@@ -1,0 +1,4 @@
+INITIALIZE x <- 5
+INITIALIZE y <- 3
+PRINT x + y >> expect: 8
+OUTPUT x * y >> expect: 15

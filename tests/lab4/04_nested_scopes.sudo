@@ -1,0 +1,14 @@
+INITIALIZE x <- 5
+
+BEGIN
+    INITIALIZE y <- 10
+
+    BEGIN
+        INITIALIZE z <- 15
+        PRINT x + y + z >> expect: 30
+    END
+
+    PRINT x + y >> expect: 15
+END
+
+PRINT x >> expect: 5

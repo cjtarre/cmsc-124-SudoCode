@@ -1,0 +1,9 @@
+INITIALIZE x <- 10
+PRINT x >> expect: 10
+
+BEGIN
+    INITIALIZE x <- 20
+    PRINT x >> expect: 20
+END
+
+PRINT x >> expect: 10

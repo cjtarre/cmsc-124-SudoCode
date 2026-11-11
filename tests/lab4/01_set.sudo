@@ -1,0 +1,3 @@
+INITIALIZE x <- 10
+SET x <- 25
+PRINT x >> expect: 25

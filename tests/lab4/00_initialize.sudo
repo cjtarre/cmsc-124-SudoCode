@@ -1,0 +1,2 @@
+INITIALIZE x <- 10
+PRINT x >> expect: 10
