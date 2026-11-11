@@ -19,8 +19,8 @@ public enum TokenType {
     // Subroutines & Scope
     FUNCTION, PROCEDURE, CALL, RETURN, 
 
-    // Block Termination
-    END,
+    // Explicit scope boundaries
+    BEGIN, END,
 
     // Boolean & Null Literals
     TRUE, FALSE, NIL,

@@ -35,6 +35,7 @@ class Scanner {
         ["CALL"] = TokenType.CALL,
         ["RETURN"] = TokenType.RETURN,
 
+        ["BEGIN"] = TokenType.BEGIN,
         ["END"] = TokenType.END,
 
         ["TRUE"] = TokenType.TRUE,

@@ -70,6 +70,104 @@ class Parser {
         return new Expr.Sequence(_expr);
     }
 
+
+
+    // Lab 4: Parse a complete program as a sequence of statements.
+    // Keep this separate from Run() to preserve Labs 2 and 3.
+    public IReadOnlyList<Statement> RunStatements() {
+        List<Statement> statements = [];
+
+        // Lab 4 does not use newlines as expression boundaries.
+        _expressionLine = null;
+
+        while (!IsAtEnd()) {
+            try {
+                // Each successful call must consume one statement.
+                statements.Add(ParseStatement());
+            }
+            catch (ParseError) {
+                if (Check(TokenType.END) || Check(TokenType.ELSE))
+                    Advance();
+                else
+                    SynchronizeStatements();
+            }
+        }
+        return statements;
+    }
+
+    // Identify the statement from its opening keyword.
+    private Statement ParseStatement() {
+        if (Match(TokenType.INITIALIZE))
+            return ParseInitialize();
+
+        if (Match(TokenType.SET))
+            return ParseSet();
+
+        if (Match(TokenType.PRINT, TokenType.OUTPUT))
+            return new Statement.Print(Expression());
+
+        // BEGIN creates a new nested scope.
+        if (Match(TokenType.BEGIN))
+            return ParseBlock();
+
+        // END is valid only when closing an open block.
+        throw Error("Expected a statement.", Peek());
+    }
+
+    // Parse a variable declaration:
+    // INITIALIZE variable <- expression
+    private Statement ParseInitialize() {
+        // Read the variable name after INITIALIZE.
+        Token name = Consume(
+            TokenType.IDENTIFIER,
+            "Expected variable name after INITIALIZE."
+        );
+
+        // Require the assignment operator before the initial value.
+        Consume(
+            TokenType.ASSIGN,
+            "Expected '<-' after variable name."
+        );
+
+        // Parse the initial value and create the declaration node.
+        return new Statement.Initialize(name, Expression());
+    }
+
+    // Parse an assignment to an existing variable:
+    // SET variable <- expression
+    private Statement ParseSet() {
+        // Read the variable name after SET.
+        Token name = Consume(
+            TokenType.IDENTIFIER,
+            "Expected variable name after SET."
+        );
+
+        // Require the assignment operator before the new value.
+        Consume(
+            TokenType.ASSIGN,
+            "Expected '<-' after variable name."
+        );
+
+        // Parse the new value and create the assignment node.
+        return new Statement.Set(name, Expression());
+    }
+
+    // Parse statements inside BEGIN ... END.
+    // Recursive parsing allows blocks to nest to arbitrary depth.
+    private Statement ParseBlock() {
+        List<Statement> statements = [];
+
+        // Continue until the matching END or the end of the file.
+        while (!Check(TokenType.END) && !IsAtEnd()) {
+            statements.Add(ParseStatement());
+        }
+
+        // Every BEGIN must have a matching END.
+        Consume(TokenType.END, "Expected END after block.");
+
+        return new Statement.Block(statements);
+    }
+
     private void Synchronize() {
         Advance();                  // consume the erroneous token
         while (!IsAtEnd()) {        // keep advancing until we find a statement boundary (by line for now)
@@ -77,6 +175,29 @@ class Parser {
             Advance();
         }
     }
+
+    // Recover after a malformed statement.
+    // Stop at a supported statement keyword or the end of the file.
+    private void SynchronizeStatements() {
+        // Always consume at least one token to ensure progress.
+        if (!IsAtEnd())
+            Advance();
+
+        while (!IsAtEnd()) {
+            switch (Peek().Type) {
+                case TokenType.INITIALIZE:
+                case TokenType.SET:
+                case TokenType.PRINT:
+                case TokenType.OUTPUT:
+                case TokenType.BEGIN:
+                    return;
+            }
+
+            Advance();
+        }
+    }
+
+
 
     // grammar rules (operations ordered by precedence from lowest to highest)
     private Expr Expression() => Assignment();  // entry point for parsing expressions
