@@ -5,7 +5,7 @@ class Evaluator {
     private readonly List<object?> _results = new List<object?>();
     private readonly Expr _AST;
     private readonly ErrorHandler _error;
-    private readonly Dictionary<string, object?> _environment = new();
+    private readonly SudoEnvironment _environment = new();
 
     // constructor
     public Evaluator(Expr ast, ErrorHandler error) {
@@ -47,13 +47,21 @@ class Evaluator {
             case Expr.Grouping g:   return Evaluate(g.Expression);
 
             case Expr.Variable v:
-                if (_environment.TryGetValue(v.Name.Lexeme, out var envValue)) return envValue;
+                if (_environment.TryGet(v.Name.Lexeme, out var envValue))
+                    return envValue;
+
                 throw Error($"Undefined variable '{v.Name.Lexeme}'", v.Name);
+
 
             case Expr.Assignment a:
             {
                 var assignedValue = Evaluate(a.Value);
-                _environment[a.Name.Lexeme] = assignedValue; return assignedValue;
+
+                // Preserve Lab 3 behavior: assignment can create a binding.
+                if (!_environment.TryAssign(a.Name.Lexeme, assignedValue))
+                    _environment.Define(a.Name.Lexeme, assignedValue);
+
+                return assignedValue;
             }
             
             case Expr.Unary u:
