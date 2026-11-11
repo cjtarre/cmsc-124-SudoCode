@@ -3,9 +3,9 @@ class Parser {
     private readonly IReadOnlyList<Token> _tokens = [];
     private readonly ErrorHandler _error;
 
-    // marker references
+    // Track the current token and expression boundaries.
     private int _current = 0;
-    private int? _expressionLine = null;
+    private int? _expressionLine = null; // Restrict legacy expressions to one line.
 
     // constructor
     public Parser(IReadOnlyList<Token> tokens, ErrorHandler error) {
@@ -70,10 +70,142 @@ class Parser {
         return new Expr.Sequence(_expr);
     }
 
+    // Parse a complete Lab 4 program.
+    // Allow bare expressions only when running in REPL mode.
+    public IReadOnlyList<Statement> RunStatements(bool allowExpressions = false) {
+        List<Statement> statements = [];
+
+        // Allow Lab 4 expressions to span multiple lines.
+        _expressionLine = null;
+
+        while (!IsAtEnd()) {
+            int start = _current;
+
+            try {
+                statements.Add(ParseStatement(allowExpressions));
+            }
+            catch (ParseError) {
+                // Ensure recovery always makes progress.
+                if (_current == start && !IsAtEnd())
+                    Advance();
+
+                // Continue parsing to collect additional syntax errors.
+                SynchronizeStatements();
+            }
+        }
+
+        return statements;
+    }
+
+    // Identify the statement from its opening keyword.
+    private Statement ParseStatement(bool allowExpressions = false) {
+        if (Match(TokenType.INITIALIZE))
+            return ParseInitialize();
+
+        if (Match(TokenType.SET))
+            return ParseSet();
+
+        if (Match(TokenType.PRINT, TokenType.OUTPUT))
+            return new Statement.Print(Expression());
+
+        // BEGIN creates a new nested scope.
+        if (Match(TokenType.BEGIN))
+            return ParseBlock();
+
+        // Treat bare expressions as statements only in REPL mode.
+        if (allowExpressions)
+            return new Statement.Expression(Expression());
+
+        throw Error("Expected a statement.", Peek());
+    }
+
+    // Parse a variable declaration:
+    // INITIALIZE variable <- expression
+    private Statement ParseInitialize() {
+        // Read the variable name after INITIALIZE.
+        Token name = Consume(
+            TokenType.IDENTIFIER,
+            "Expected variable name after INITIALIZE."
+        );
+
+        // Require the assignment operator before the initial value.
+        Consume(
+            TokenType.ASSIGN,
+            "Expected '<-' after variable name."
+        );
+
+        // Parse the initial value and create the declaration node.
+        return new Statement.Initialize(name, Expression());
+    }
+
+    // Parse an assignment to an existing variable:
+    // SET variable <- expression
+    private Statement ParseSet() {
+        // Read the variable name after SET.
+        Token name = Consume(
+            TokenType.IDENTIFIER,
+            "Expected variable name after SET."
+        );
+
+        // Require the assignment operator before the new value.
+        Consume(
+            TokenType.ASSIGN,
+            "Expected '<-' after variable name."
+        );
+
+        // Parse the new value and create the assignment node.
+        return new Statement.Set(name, Expression());
+    }
+
+    // Parse statements inside BEGIN ... END.
+    // Each nested block handles its own syntax errors.
+    private Statement ParseBlock() {
+        List<Statement> statements = [];
+
+        while (!Check(TokenType.END) && !IsAtEnd()) {
+            int start = _current;
+
+            try {
+                statements.Add(ParseStatement());
+            }
+            catch (ParseError) {
+                // Avoid repeatedly parsing the same invalid token.
+                if (_current == start && !IsAtEnd())
+                    Advance();
+
+                SynchronizeStatements();
+            }
+        }
+
+        // Every BEGIN must have a matching END.
+        Consume(TokenType.END, "Expected END after block.");
+
+        return new Statement.Block(statements);
+    }
+
     private void Synchronize() {
         Advance();                  // consume the erroneous token
         while (!IsAtEnd()) {        // keep advancing until we find a statement boundary (by line for now)
             if (Previous().Line != Peek().Line) return;
+            Advance();
+        }
+    }
+
+    // Identify valid starting tokens for Lab 4 statements.
+    private bool IsStatementStart() =>
+        Check(TokenType.INITIALIZE) ||
+        Check(TokenType.SET) ||
+        Check(TokenType.PRINT) ||
+        Check(TokenType.OUTPUT) ||
+        Check(TokenType.BEGIN);
+
+    // Recover at the next statement or block boundary.
+    private void SynchronizeStatements() {
+        // Skip invalid tokens until a valid boundary is found.
+        while (!IsAtEnd()) {
+            if (IsStatementStart() || Check(TokenType.END))
+                return;
+
             Advance();
         }
     }
