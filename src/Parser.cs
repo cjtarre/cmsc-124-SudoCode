@@ -3,9 +3,9 @@ class Parser {
     private readonly IReadOnlyList<Token> _tokens = [];
     private readonly ErrorHandler _error;
 
-    // marker references
+    // Track the current token and expression boundaries.
     private int _current = 0;
-    private int? _expressionLine = null;
+    private int? _expressionLine = null; // Restrict legacy expressions to one line.
 
     // constructor
     public Parser(IReadOnlyList<Token> tokens, ErrorHandler error) {
@@ -70,33 +70,35 @@ class Parser {
         return new Expr.Sequence(_expr);
     }
 
-
-
-    // Lab 4: Parse a complete program as a sequence of statements.
-    // Keep this separate from Run() to preserve Labs 2 and 3.
-    public IReadOnlyList<Statement> RunStatements() {
+    // Parse a complete Lab 4 program.
+    // Allow bare expressions only when running in REPL mode.
+    public IReadOnlyList<Statement> RunStatements(bool allowExpressions = false) {
         List<Statement> statements = [];
 
-        // Lab 4 does not use newlines as expression boundaries.
+        // Allow Lab 4 expressions to span multiple lines.
         _expressionLine = null;
 
         while (!IsAtEnd()) {
+            int start = _current;
+
             try {
-                // Each successful call must consume one statement.
-                statements.Add(ParseStatement());
+                statements.Add(ParseStatement(allowExpressions));
             }
             catch (ParseError) {
-                if (Check(TokenType.END) || Check(TokenType.ELSE))
+                // Ensure recovery always makes progress.
+                if (_current == start && !IsAtEnd())
                     Advance();
-                else
-                    SynchronizeStatements();
+
+                // Continue parsing to collect additional syntax errors.
+                SynchronizeStatements();
             }
         }
+
         return statements;
     }
 
     // Identify the statement from its opening keyword.
-    private Statement ParseStatement() {
+    private Statement ParseStatement(bool allowExpressions = false) {
         if (Match(TokenType.INITIALIZE))
             return ParseInitialize();
 
@@ -110,7 +112,10 @@ class Parser {
         if (Match(TokenType.BEGIN))
             return ParseBlock();
 
-        // END is valid only when closing an open block.
+        // Treat bare expressions as statements only in REPL mode.
+        if (allowExpressions)
+            return new Statement.Expression(Expression());
+
         throw Error("Expected a statement.", Peek());
     }
 
@@ -153,13 +158,23 @@ class Parser {
     }
 
     // Parse statements inside BEGIN ... END.
-    // Recursive parsing allows blocks to nest to arbitrary depth.
+    // Each nested block handles its own syntax errors.
     private Statement ParseBlock() {
         List<Statement> statements = [];
 
-        // Continue until the matching END or the end of the file.
         while (!Check(TokenType.END) && !IsAtEnd()) {
-            statements.Add(ParseStatement());
+            int start = _current;
+
+            try {
+                statements.Add(ParseStatement());
+            }
+            catch (ParseError) {
+                // Avoid repeatedly parsing the same invalid token.
+                if (_current == start && !IsAtEnd())
+                    Advance();
+
+                SynchronizeStatements();
+            }
         }
 
         // Every BEGIN must have a matching END.
@@ -176,28 +191,24 @@ class Parser {
         }
     }
 
-    // Recover after a malformed statement.
-    // Stop at a supported statement keyword or the end of the file.
-    private void SynchronizeStatements() {
-        // Always consume at least one token to ensure progress.
-        if (!IsAtEnd())
-            Advance();
+    // Identify valid starting tokens for Lab 4 statements.
+    private bool IsStatementStart() =>
+        Check(TokenType.INITIALIZE) ||
+        Check(TokenType.SET) ||
+        Check(TokenType.PRINT) ||
+        Check(TokenType.OUTPUT) ||
+        Check(TokenType.BEGIN);
 
+    // Recover at the next statement or block boundary.
+    private void SynchronizeStatements() {
+        // Skip invalid tokens until a valid boundary is found.
         while (!IsAtEnd()) {
-            switch (Peek().Type) {
-                case TokenType.INITIALIZE:
-                case TokenType.SET:
-                case TokenType.PRINT:
-                case TokenType.OUTPUT:
-                case TokenType.BEGIN:
-                    return;
-            }
+            if (IsStatementStart() || Check(TokenType.END))
+                return;
 
             Advance();
         }
     }
-
-
 
     // grammar rules (operations ordered by precedence from lowest to highest)
     private Expr Expression() => Assignment();  // entry point for parsing expressions
