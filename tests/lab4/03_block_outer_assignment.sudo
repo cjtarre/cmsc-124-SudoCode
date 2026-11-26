@@ -1,0 +1,9 @@
+INITIALIZE total <- 2
+
+BEGIN
+    SET total <- total + 3
+    INITIALIZE doubled <- total * 2
+    PRINT doubled >> expect: 10
+END
+
+PRINT total >> expect: 5

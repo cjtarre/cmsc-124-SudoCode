@@ -1,0 +1,16 @@
+INITIALIZE value <- "outer"
+
+BEGIN
+    PRINT value >> expect: outer
+    INITIALIZE value <- "inner"
+    PRINT value >> expect: inner
+
+    BEGIN
+        INITIALIZE value <- "nested"
+        PRINT value >> expect: nested
+    END
+
+    PRINT value >> expect: inner
+END
+
+PRINT value >> expect: outer

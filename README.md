@@ -298,6 +298,14 @@ Message format:
 | `err_static` | Reports a syntax error before evaluation for malformed input. |
 | `err_undefined_variable` | Reports a runtime error when an undefined variable is referenced. |
 
+### Lab 4 Tests
+| Test | Coverage |
+|---|---|
+| `00_initialization` | Declares values and prints initialized numbers, strings, booleans, and `NIL`; covers `PRINT` and `OUTPUT`. |
+| `01_set_updates` | Updates existing variables with expressions and confirms other bindings retain their values. |
+| `02_block_shadowing` | Verifies nested `BEGIN` / `END` scopes shadow bindings without changing the enclosing values. |
+| `03_block_outer_assignment` | Verifies `SET` updates an enclosing binding while declarations remain local to the block. |
+
 Run locally with:
 ```bash
 curl -sSL https://raw.githubusercontent.com/WhiteLicorice/cmsc-124-harness/v1.1/run_tests.py -o run_tests.py
