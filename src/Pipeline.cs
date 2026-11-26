@@ -12,19 +12,16 @@ static class Pipeline {
         var e = new ErrorHandler();
 
         // Report errors before moving to the next stage.
-        ExitCode? Gate(ExitCode failcon) =>
-            e.HasErrors ? Finish(e, failcon) : null;
+        ExitCode? Gate(ExitCode failcon) => e.HasErrors ? Finish(e, failcon) : null;
 
         // Scan the source.
         var tokens = new Scanner(source, e).Run();
 
         // Stop if the scanner reports a lexical error.
-        if (Gate(ExitCode.StaticError) is {} scanFailed)
-            return scanFailed;
+        if (Gate(ExitCode.StaticError) is {} scanFailed) return scanFailed;
 
         // Return tokens directly when running the tokenizer.
-        if (stage == Stage.Tokenize)
-            return Finish(tokens);
+        if (stage == Stage.Tokenize) return Finish(tokens);
 
         // Lab 4: Parse and execute statements.
         if (stage is Stage.Program or Stage.Repl) {
@@ -57,8 +54,7 @@ static class Pipeline {
             return legacyParseFailed;
 
         // Display the expression AST in parse mode.
-        if (stage == Stage.Parse)
-            return Finish(Expr.Print(ast));
+        if (stage == Stage.Parse) return Finish(Expr.Print(ast));
 
         // Evaluate expressions and print their results.
         var results = new Evaluator(ast, e).Run();

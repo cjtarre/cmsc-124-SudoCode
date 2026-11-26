@@ -47,14 +47,9 @@ static ExitCode LoadSource(string path, Stage stage) {
 
 // Run an interactive session that accepts statements and expressions.
 static ExitCode REPL() {
-    // Create a shared environment to preserve variables between inputs.
-    var environment = new SudoEnvironment();
-
-    // Store multiple lines until a complete block is entered.
-    var buffer = new StringBuilder();
-
-    // Track the number of BEGIN blocks that have not been closed.
-    int blockDepth = 0;
+    var environment = new SudoEnvironment();	// shared environment preserve vars between inputs
+    var buffer = new StringBuilder();			// storage until complete block is entered
+    int blockDepth = 0;							// track # of unclosed BEGIN blocks
 
     Console.WriteLine("SudoCode REPL 0.1.0 (Type 'exit' to quit)");
 
@@ -64,24 +59,20 @@ static ExitCode REPL() {
         string? line = Console.ReadLine();
 
         // Exit when the input stream reaches its end.
-        if (line is null)
-            break;
+        if (line is null) break;
 
         // Allow the user to exit when no block is open.
         if (blockDepth == 0 &&
             line.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
             break;
 
-        // Ignore empty or whitespace-only lines.
-        if (string.IsNullOrWhiteSpace(line))
-            continue;
-
-        // Add the current line to the pending source code.
-        buffer.AppendLine(line);
+        if (string.IsNullOrWhiteSpace(line)) continue; // ignore empty/whitespace-only lines.
+        
+		buffer.AppendLine(line); // add current to pending source code.
 
         // Split the line into words to detect block delimiters.
         foreach (string word in line.Split(
-            new[] { ' ', '\t', '\r', '\n' },
+            [' ', '\t', '\r', '\n'],
             StringSplitOptions.RemoveEmptyEntries
         )) {
             // A new BEGIN opens another block.
@@ -94,8 +85,7 @@ static ExitCode REPL() {
         }
 
         // Wait for more input while a block remains open.
-        if (blockDepth > 0)
-            continue;
+        if (blockDepth > 0) continue;
 
         // Parse and execute the complete input using the shared environment.
         Execute(buffer.ToString(), Stage.Repl, environment);
