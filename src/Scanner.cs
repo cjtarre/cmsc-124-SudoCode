@@ -32,7 +32,6 @@ class Scanner {
 
         ["FUNCTION"] = TokenType.FUNCTION,
         ["PROCEDURE"] = TokenType.PROCEDURE,
-        ["CALL"] = TokenType.CALL,
         ["RETURN"] = TokenType.RETURN,
 
         ["BEGIN"] = TokenType.BEGIN,

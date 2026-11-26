@@ -44,7 +44,7 @@ All keywords in this language are defined and written in uppercase.
 | `WHILE` / `DO` | Spawns traditional conditional execution iteration tracks. |
 | `REPEAT` / `UNTIL` | Spawns standard bottom-driven boundary loop structures. |
 | `CASE` / `OF` / `DEFAULT` | Manages structural multi-option expression selections. |
-| `FUNCTION` / `PROCEDURE` / `CALL` / `RETURN` | Formulates explicit modular routine structures and scope executions. |
+| `FUNCTION` / `PROCEDURE` / `RETURN` | Formulates explicit modular routine structures and scope executions; invoke a routine with `identifier(arguments)`. |
 | `END` | Explicitly seals structural layout blocks (e.g., `END IF`, `END WHILE`). |
 
 ### Master Token Registry
@@ -56,7 +56,7 @@ ASSIGN  EQUAL  NOT_EQUAL  LESSER  LESSER_EQUAL  GREATER  GREATER_EQUAL
 IDENTIFIER  STRING  NUMBER
 INITIALIZE  SET  INPUT  OUTPUT  PRINT
 IF  THEN  ELSE  WHILE  DO  FOR  EACH  IN  TO  STEP  REPEAT  UNTIL
-CASE  OF  DEFAULT  FUNCTION  PROCEDURE  CALL  RETURN  END
+CASE  OF  DEFAULT  FUNCTION  PROCEDURE  RETURN  END
 AND  OR  NOT  XOR  TRUE  FALSE  NIL
 DOT  COLON  COMMA
 EOF

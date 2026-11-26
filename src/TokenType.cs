@@ -17,7 +17,7 @@ public enum TokenType {
     CASE, OF, DEFAULT,
 
     // Subroutines & Scope
-    FUNCTION, PROCEDURE, CALL, RETURN, 
+    FUNCTION, PROCEDURE, RETURN,
 
     // Explicit scope boundaries
     BEGIN, END,
