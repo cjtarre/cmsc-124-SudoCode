@@ -305,6 +305,11 @@ Message format:
 | `01_set_updates` | Updates existing variables with expressions and confirms other bindings retain their values. |
 | `02_block_shadowing` | Verifies nested `BEGIN` / `END` scopes shadow bindings without changing the enclosing values. |
 | `03_block_outer_assignment` | Verifies `SET` updates an enclosing binding while declarations remain local to the block. |
+| `err_scope_leak` | Reports a runtime error when a block-local variable is referenced after its scope ends. |
+| `err_undefined_set` | Reports a runtime error when `SET` targets an undefined variable. |
+| `err_set_non_identifier` | Rejects a numeric literal as a `SET` target. |
+| `err_initialize_non_identifier` | Rejects a string literal as an `INITIALIZE` target. |
+| `err_set_keyword_target` | Rejects a reserved keyword as a `SET` target. |
 
 Run locally with:
 ```bash

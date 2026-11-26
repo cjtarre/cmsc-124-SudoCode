@@ -1,0 +1,1 @@
+SET PRINT <- 0 >> expect error: Expected variable name after SET.
