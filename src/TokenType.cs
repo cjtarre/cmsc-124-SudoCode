@@ -17,10 +17,10 @@ public enum TokenType {
     CASE, OF, DEFAULT,
 
     // Subroutines & Scope
-    FUNCTION, PROCEDURE, CALL, RETURN, 
+    FUNCTION, PROCEDURE, RETURN,
 
-    // Block Termination
-    END,
+    // Explicit scope boundaries
+    BEGIN, END,
 
     // Boolean & Null Literals
     TRUE, FALSE, NIL,

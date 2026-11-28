@@ -1,0 +1,5 @@
+BEGIN
+    INITIALIZE local <- 1
+END
+
+PRINT local >> expect runtime error: Undefined variable 'local'

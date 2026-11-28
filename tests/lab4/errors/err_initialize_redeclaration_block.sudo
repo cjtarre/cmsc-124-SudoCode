@@ -1,0 +1,4 @@
+BEGIN
+    INITIALIZE local <- 1
+    INITIALIZE local <- 2 >> expect runtime error: Variable 'local' is already initialized in this scope.
+END

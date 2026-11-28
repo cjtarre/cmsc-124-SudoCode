@@ -1,0 +1,8 @@
+INITIALIZE count <- 3
+INITIALIZE greeting <- "hello"
+INITIALIZE enabled <- TRUE
+
+PRINT count >> expect: 3
+OUTPUT greeting >> expect: hello
+PRINT enabled >> expect: true
+PRINT NIL >> expect: nil

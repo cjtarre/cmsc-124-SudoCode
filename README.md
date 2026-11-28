@@ -35,8 +35,8 @@ Exit codes:
 All keywords in this language are defined and written in uppercase.
 | Keyword | Purpose |
 |---|---|
-| `INITIALIZE` | Sets up a variable or data structure with an initial value using `<-`. |
-| `SET` | Modifies the value of an existing variable using `<-`. |
+| `INITIALIZE` | Creates a variable in the current scope; it cannot redeclare a name in that scope, but can shadow an enclosing name. |
+| `SET` | Modifies the nearest existing variable using `<-`; a bare `name <- value` is shorthand for `SET name <- value`. |
 | `INPUT` | Receives raw input streams from the tracking host environment context. |
 | `OUTPUT` / `PRINT` | Displays stringified evaluation representations to the standard stdout terminal stream. |
 | `IF` / `THEN` / `ELSE` | Controls conditional multi-branch logical flow paths. |
@@ -44,7 +44,7 @@ All keywords in this language are defined and written in uppercase.
 | `WHILE` / `DO` | Spawns traditional conditional execution iteration tracks. |
 | `REPEAT` / `UNTIL` | Spawns standard bottom-driven boundary loop structures. |
 | `CASE` / `OF` / `DEFAULT` | Manages structural multi-option expression selections. |
-| `FUNCTION` / `PROCEDURE` / `CALL` / `RETURN` | Formulates explicit modular routine structures and scope executions. |
+| `FUNCTION` / `PROCEDURE` / `RETURN` | Formulates explicit modular routine structures and scope executions; invoke a routine with `identifier(arguments)`. |
 | `END` | Explicitly seals structural layout blocks (e.g., `END IF`, `END WHILE`). |
 
 ### Master Token Registry
@@ -56,7 +56,7 @@ ASSIGN  EQUAL  NOT_EQUAL  LESSER  LESSER_EQUAL  GREATER  GREATER_EQUAL
 IDENTIFIER  STRING  NUMBER
 INITIALIZE  SET  INPUT  OUTPUT  PRINT
 IF  THEN  ELSE  WHILE  DO  FOR  EACH  IN  TO  STEP  REPEAT  UNTIL
-CASE  OF  DEFAULT  FUNCTION  PROCEDURE  CALL  RETURN  END
+CASE  OF  DEFAULT  FUNCTION  PROCEDURE  RETURN  END
 AND  OR  NOT  XOR  TRUE  FALSE  NIL
 DOT  COLON  COMMA
 EOF
@@ -200,11 +200,11 @@ NOT 3 → (NOT 3.0)
 - Division or modulo by zero: Causes a runtime evaluation error with exit code `70`.
 
 ### Scope and bindings
-- Lab 3 evaluator behavior: The `<-` operator creates or updates a variable binding in the current evaluation environment. Referencing an undefined variable during evaluation causes a runtime error with exit code `70`.
-- Redeclaration in the same scope: Attempting to `INITIALIZE` a variable that already exists in the same scope causes a static analysis error exiting under code `65`.
+- Lab 3 expression-evaluator behavior: The `<-` operator can create or update a variable binding. In Lab 4 programs and the REPL, `<-` is shorthand for `SET` and requires an existing variable.
+- Redeclaration in the same scope: Attempting to `INITIALIZE` a variable that already exists in the current scope causes a runtime error exiting under code `70`.
 - Uninitialized variable holds: Cannot occur. Variables must explicitly pass through an `INITIALIZE` binding sequence, unless it is a counter variable such as in `FOR`.
 - Shadowing: Inner local block levels fully shadow broader identifier declarations safely.
-- Undefined name: Referencing unmapped variable names causes a static validation crash exiting with code `65`.
+- Undefined name: In Lab 4, referencing or assigning an unmapped variable causes a runtime error exiting with code `70`.
 
 ### Control flow and functions
 - Logical operators return: The specific logical evaluated `bool` answer (`TRUE` or `FALSE`).
@@ -298,6 +298,24 @@ Message format:
 | `err_static` | Reports a syntax error before evaluation for malformed input. |
 | `err_undefined_variable` | Reports a runtime error when an undefined variable is referenced. |
 
+### Lab 4 Tests
+| Test | Coverage |
+|---|---|
+| `00_initialization` | Declares values and prints initialized numbers, strings, booleans, and `NIL`; covers `PRINT` and `OUTPUT`. |
+| `01_set_updates` | Updates existing variables with both `SET` and its `<-` shorthand, confirming other bindings retain their values. |
+| `02_block_shadowing` | Verifies nested scopes shadow bindings, and assignments update only the nearest shadowed binding. |
+| `03_block_outer_assignment` | Verifies `SET` and `<-` shorthand update the nearest enclosing binding while declarations remain local to the block. |
+| `04_variable_to_variable` | Covers variable-to-variable initialization and updates using both `SET` and `<-`, including value-copy behavior. |
+| `err_initialize_redeclaration` | Reports a runtime error when `INITIALIZE` redeclares a name in the same scope. |
+| `err_initialize_redeclaration_block` | Reports a runtime error when a block redeclares a name in that same block scope. |
+| `err_scope_leak` | Reports a runtime error when a block-local variable is referenced after its scope ends. |
+| `err_undefined_set` | Reports a runtime error when `SET` targets an undefined variable. |
+| `err_undefined_assignment` | Reports a runtime error when `<-` shorthand targets an undefined variable. |
+| `err_undefined_assignment_value` | Reports a runtime error when an assignment value references an undefined variable. |
+| `err_set_non_identifier` | Rejects a numeric literal as a `SET` target. |
+| `err_initialize_non_identifier` | Rejects a string literal as an `INITIALIZE` target. |
+| `err_set_keyword_target` | Rejects a reserved keyword as a `SET` target. |
+
 Run locally with:
 ```bash
 curl -sSL https://raw.githubusercontent.com/WhiteLicorice/cmsc-124-harness/v1.1/run_tests.py -o run_tests.py
@@ -306,6 +324,7 @@ python3 run_tests.py tests/lab0
 python3 run_tests.py tests/lab1
 python3 run_tests.py tests/lab2
 python3 run_tests.py tests/lab3
+python3 run_tests.py tests/lab4
 ```
 
 ## Sample code
@@ -326,13 +345,13 @@ Output:
 ```
 
 ## Design rationale
-`SudoCode` was intentionally designed to capture the structural clarity of classic academic pseudocode while eliminating C-style syntax clutter. We explicitly decoupled our keywords to follow simple, clean, individual token blocks (such as processing `END` and `IF` as separate tokens rather than a single compound lexeme), allowing our upcoming parser rules to safely establish scope logic. We chose to separate declaration (`INITIALIZE`) from mutation (`SET`) to enforce absolute clarity when reading state transformations. 
+`SudoCode` was intentionally designed to capture the structural clarity of classic academic pseudocode while eliminating C-style syntax clutter. We explicitly decoupled our keywords to follow simple, clean, individual token blocks (such as processing `END` and `IF` as separate tokens rather than a single compound lexeme), allowing our upcoming parser rules to safely establish scope logic. We distinguish declaration (`INITIALIZE`), which creates a binding in the current scope, from mutation (`SET`), which updates the nearest existing binding. In Lab 4, `x <- value` is a shorthand for `SET x <- value` and follows the same update rules.
 
 Our most significant mid-design pivot was removing the dual assignment meaning of the `TO` keyword. Originally conceptualized for assignments (e.g., `SET x TO 5`), this created a parsing ambiguity with traditional `FOR i IN 1 TO 10` iteration limits. We resolved this conflict by adopting the universal pseudocode assignment arrow (`<-`) and reserving `TO` strictly for loop boundaries. We also opted out of using curly braces, leaning entirely into matching text boundaries (like `IF` paired with `END IF`) to keep program code clean, flowing, and readable. It was also decided to allow for alternative symbols such as `\|\|` and `&&` for shorthand input for more flexible code with the conceptualized language. 
 
 ## Known limitations
 - Standard multi-line block commenting structures are completely unsupported; documentation annotations are restricted strictly to single-line `>>` prefixes.
-- Compact mutating expressions such as `++`, `--`, or `+=` do not exist, requiring explicit manual assignments (`SET x <- x + 1`).
+- Compact mutating expressions such as `++`, `--`, or `+=` do not exist, requiring explicit manual assignments (`SET x <- x + 1` or its shorthand `x <- x + 1`).
 - Escape code literals (such as `\n` or `\t`) inside text strings are currently treated as uninterpreted character sets rather than active formatting commands.
 
 ## Changelog
@@ -341,3 +360,4 @@ Our most significant mid-design pivot was removing the dual assignment meaning o
 | Lab 1 | Lexical specifications defined; scanner implementation and lexical rules for tokens, operators, literals, comments, and whitespace established. |
 | Lab 2 | Expression grammar defined; parser, AST representation and printer, operator precedence and associativity, assignment and logical expressions, and syntax error handling established. |
 | Lab 3 | Expression evaluation implemented; runtime values, truthiness, arithmetic, string concatenation, comparisons, equality, logical operations, variable assignment, and runtime error handling established. |
+| Lab 4 | Statement execution and nested scopes established; `INITIALIZE` rejects same-scope redeclarations while allowing shadowing, and `SET` plus `<-` update the nearest existing binding. |

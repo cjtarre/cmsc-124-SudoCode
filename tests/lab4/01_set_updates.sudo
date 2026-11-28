@@ -1,0 +1,11 @@
+INITIALIZE count <- 1
+SET count <- count + 4
+PRINT count >> expect: 5
+
+count <- count * 2
+PRINT count >> expect: 10
+
+INITIALIZE copy <- count
+SET count <- 0
+PRINT copy >> expect: 10
+PRINT count >> expect: 0
