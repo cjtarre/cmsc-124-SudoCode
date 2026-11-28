@@ -1,0 +1,2 @@
+INITIALIZE value <- 1
+INITIALIZE value <- 2 >> expect runtime error: Variable 'value' is already initialized in this scope.

@@ -1,0 +1,14 @@
+INITIALIZE source <- 10
+INITIALIZE copy <- source
+PRINT copy >> expect: 10
+
+SET source <- 15
+PRINT copy >> expect: 10
+SET copy <- source
+PRINT copy >> expect: 15
+
+INITIALIZE extra <- 20
+source <- extra
+PRINT copy >> expect: 15
+copy <- source
+PRINT copy >> expect: 20

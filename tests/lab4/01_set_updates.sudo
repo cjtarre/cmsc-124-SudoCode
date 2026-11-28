@@ -2,7 +2,7 @@ INITIALIZE count <- 1
 SET count <- count + 4
 PRINT count >> expect: 5
 
-SET count <- count * 2
+count <- count * 2
 PRINT count >> expect: 10
 
 INITIALIZE copy <- count

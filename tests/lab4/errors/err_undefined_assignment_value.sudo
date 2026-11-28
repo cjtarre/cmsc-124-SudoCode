@@ -1,0 +1,2 @@
+INITIALIZE target <- 1
+SET target <- missing >> expect runtime error: Undefined variable 'missing'
