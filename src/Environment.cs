@@ -5,21 +5,16 @@ public class SudoEnvironment {
     public SudoEnvironment? Enclosing { get; }
     public SudoEnvironment(SudoEnvironment? enclosing = null) => Enclosing = enclosing;
 
-    // Create or replace a binding in the current scope.
-    public void Define(string name, object? value) {
-        _values[name] = value;
-    }
+    // Create a binding in the current scope if it does not already exist.
+    public bool TryDefine(string name, object? value) => _values.TryAdd(name, value);
 
     // Search the current scope, then enclosing scopes.
     public bool TryGet(string name, out object? value) {
         if (_values.TryGetValue(name, out value))
             return true;
 
-        if (Enclosing != null)
-            return Enclosing.TryGet(name, out value);
-
         value = null;
-        return false;
+        return Enclosing?.TryGet(name, out value) ?? false;
     }
 
     // Update the nearest existing binding.
@@ -28,10 +23,6 @@ public class SudoEnvironment {
             _values[name] = value;
             return true;
         }
-
-        if (Enclosing != null)
-            return Enclosing.TryAssign(name, value);
-
-        return false;
+        return Enclosing?.TryAssign(name, value) ?? false;
     }
 }

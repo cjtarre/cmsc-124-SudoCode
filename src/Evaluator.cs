@@ -5,6 +5,7 @@ class Evaluator {
     private readonly Expr? _AST;
     private readonly IReadOnlyList<Statement>? _statements;
     private readonly ErrorHandler _error;
+    private readonly bool _allowImplicitAssignment;
 
     // Track the current scope during execution.
     private SudoEnvironment _environment;
@@ -16,6 +17,7 @@ class Evaluator {
     public Evaluator(Expr ast, ErrorHandler error) {
         _AST = ast;
         _error = error;
+        _allowImplicitAssignment = true;
         _environment = new SudoEnvironment();
     }
 
@@ -27,6 +29,7 @@ class Evaluator {
     ) {
         _statements = statements;
         _error = error;
+        _allowImplicitAssignment = false;
         _environment = environment ?? new SudoEnvironment();
     }
 
@@ -88,7 +91,8 @@ class Evaluator {
         switch (statement) {
             case Statement.Initialize s:
                 // Evaluate the initializer before creating the binding.
-                _environment.Define(s.Name.Lexeme, Evaluate(s.Initializer));
+                if (!_environment.TryDefine(s.Name.Lexeme, Evaluate(s.Initializer)))
+                    throw Error($"Variable '{s.Name.Lexeme}' is already initialized in this scope.", s.Name);
                 break;
 
             case Statement.Set s:
@@ -148,9 +152,13 @@ class Evaluator {
             {
                 var assignedValue = Evaluate(a.Value);
 
-                // Preserve Lab 3 behavior: assignment can create a binding.
-                if (!_environment.TryAssign(a.Name.Lexeme, assignedValue))
-                    _environment.Define(a.Name.Lexeme, assignedValue);
+                if (!_environment.TryAssign(a.Name.Lexeme, assignedValue)) {
+                    if (!_allowImplicitAssignment)
+                        throw Error($"Undefined variable '{a.Name.Lexeme}'", a.Name);
+
+                    if (!_environment.TryDefine(a.Name.Lexeme, assignedValue))
+                        throw Error($"Variable '{a.Name.Lexeme}' is already initialized in this scope.", a.Name);
+                }
 
                 return assignedValue;
             }

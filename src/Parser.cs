@@ -37,7 +37,7 @@ class Parser {
     }
     private bool IsAtEnd() => Peek().Type == TokenType.EOF;
     private bool Check(TokenType type) => Peek().Type == type;
-    private Token Peek() => _tokens[_current]; 
+    private Token Peek(int offset = 0) => _tokens[Math.Min(_current + offset, _tokens.Count - 1)];
     private Token Previous() => _tokens[_current - 1];  // returns the most recently consumed token
     private Token Advance() {
         if (!IsAtEnd()) _current++;
@@ -111,6 +111,9 @@ class Parser {
         // BEGIN creates a new nested scope.
         if (Match(TokenType.BEGIN))
             return ParseBlock();
+
+        if (Check(TokenType.IDENTIFIER) && Peek(1).Type == TokenType.ASSIGN)
+            return new Statement.Expression(Expression());
 
         // Treat bare expressions as statements only in REPL mode.
         if (allowExpressions)
